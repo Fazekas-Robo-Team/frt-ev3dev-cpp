@@ -1,0 +1,5 @@
+.DS_Store
+build/**
+toolchain/**
+config.mk
+bin/main
