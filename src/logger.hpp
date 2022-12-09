@@ -20,9 +20,9 @@ std::ostream &operator<< (std::ostream &os, const std::pair<A, B> &p)
 class Logger 
 {
     public:
-        template <typename... T>
-        static inline void
-        error (T... args) {
+        template <typename... Args>
+        static inline void error (Args... args) 
+        {
             #if LOG_LEVEL >= 1
             std::cout << "\u001b[31;1m[";
             print_time();
@@ -31,9 +31,9 @@ class Logger
             #endif
         }
 
-        template <typename... T>
-        static inline void
-        warning (T... args) {
+        template <typename... Args>
+        static inline void warning (Args... args) 
+        {
             #if LOG_LEVEL >= 2
             std::cout << "\u001b[33;1m[";
             print_time();
@@ -42,9 +42,9 @@ class Logger
             #endif
         }
 
-        template <typename... T>
-        static inline void
-        info (T... args) {
+        template <typename... Args>
+        static inline void info (Args... args) 
+        {
             #if LOG_LEVEL >= 3
             std::cout << "\u001b[0m[";
             print_time();
@@ -53,9 +53,9 @@ class Logger
             #endif
         }
 
-        template <typename... T>
-        static inline void
-        debug (T... args) {
+        template <typename... Args>
+        static inline void debug (Args... args) 
+        {
             #if LOG_LEVEL >= 4
             std::cout << "\u001b[0m[";
             print_time();
@@ -65,8 +65,7 @@ class Logger
         }
 
     private:
-        static inline void
-        print_time ()
+        static inline void print_time ()
         {
             using namespace std::chrono;
             const auto now = system_clock::now();
@@ -80,18 +79,16 @@ class Logger
         }
 
         template <typename Head, typename... Tail>
-        static inline void 
-        print (Head head, Tail... tail)
+        static inline void print (Head head, Tail... tail)
         {
             std::cout << " " << head;
             print(tail...);
         }
 
-        static inline void
-        print ()
+        static inline void print ()
         {
             std::cout << std::endl;
         }
 };
 
-}
+} // namespace
