@@ -106,19 +106,18 @@ class Container
             const auto lock = std::scoped_lock(mutex, other.mutex);
             data.swap(other->data);
         }
-};
 
-template <typename Data>
-std::ostream &operator<< (std::ostream &stream, const Container<Data> &container) 
-{ 
-    const auto lock = std::scoped_lock(container.mutex);
-    stream << "{ "; 
-    std::string sep; 
-    for (const auto &x : container.data) {
-        stream << sep << x, sep = ", "; 
-    }
-    return stream << " }"; 
-}
+        friend std::ostream &operator<< (std::ostream &stream, const Container &container) 
+        { 
+            const auto lock = std::scoped_lock(container.mutex);
+            stream << "{ "; 
+            std::string sep; 
+            for (const auto &x : container.data) {
+                stream << sep << x, sep = ", "; 
+            }
+            return stream << " }"; 
+        }
+};
 
 template <typename Data>
 class SequenceContainer : public Container<Data>

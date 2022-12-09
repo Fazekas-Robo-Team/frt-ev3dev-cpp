@@ -22,9 +22,8 @@ int main () {
     for (auto &i : vector) {
         std::cin >> i;
     }
-    for (const auto &i : vector) {
-        FRT::Logger::info(i);
-    }
+    FRT::Logger::info(vector);
+
     vector.unlock();
 
     const auto stop = high_resolution_clock::now();
