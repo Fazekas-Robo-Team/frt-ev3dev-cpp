@@ -300,7 +300,11 @@ class Container
             container.merge(other, comp);
         }
 
-
+        constexpr auto operator<=> (const Container<Data> &other)
+        {
+            const auto lock = std::scoped_lock(mutex, other.mutex);
+            return container <=> other.container;
+        }
 };
 
 template <typename Data>
@@ -317,6 +321,7 @@ class SequenceContainer : public Container<Data>
         using Container<Data>::push_back;
         using Container<Data>::pop_back;
         using Container<Data>::emplace_back;
+        using Container<Data>::operator<=>;
 
         reverse_iterator rbegin () { return this->container.rbegin(); }
 
@@ -481,6 +486,30 @@ class AssociativeContainer : public Container<Data>
 
         //using Container<Data>::insert_or_assign;
         //using Container<Data>::try_emplace;
+
+        value_type &at (const key_type &key)
+        {
+            const auto lock = std::scoped_lock(this->mutex);
+            return this->container.at(key);
+        }
+
+        const value_type &at (const key_type &key) const
+        {
+            const auto lock = std::scoped_lock(this->mutex);
+            return this->container.at(key);
+        }
+
+        value_type &operator[] (const key_type &key)
+        {
+            const auto lock = std::scoped_lock(this->mutex);
+            return this->container[key];
+        }
+
+        const value_type &operator[] (const key_type &key) const
+        {
+            const auto lock = std::scoped_lock(this->mutex);
+            return this->container[key];
+        } 
 };
 
 template <typename Key, typename Data = std::pmr::set<Key>>
@@ -495,6 +524,8 @@ class Set : public AssociativeContainer<Data>
 
         using key_compare = typename Data::key_compare;
         using value_compare = typename Data::value_compare;
+
+        using Container<Data>::operator<=>;
 
         //using AssociativeContainer<Data>::lower_bound;
         //using AssociativeContainer<Data>::upper_bound;
@@ -524,11 +555,15 @@ class Map : public AssociativeContainer<Data>
         using value_compare = typename Data::value_compare;
         using mapped_type = typename Data::mapped_type;
 
+        using Container<Data>::operator<=>;
+
         //using AssociativeContainer<Data>::lower_bound;
         //using AssociativeContainer<Data>::upper_bound;
         //using AssociativeContainer<Data>::key_comp;
         //using AssociativeContainer<Data>::value_comp;
 
+        using AssociativeContainer<Data>::operator[];
+        using AssociativeContainer<Data>::at;
         //using AssociativeContainer<Data>::insert_or_assign;
         //using AssociativeContainer<Data>::try_emplace;
 
@@ -573,6 +608,8 @@ class UnorderedMap : public UnorderedAssociativeContainer<Data>
 
         using mapped_type = typename Data::mapped_type;
 
+        using AssociativeContainer<Data>::operator[];
+        using AssociativeContainer<Data>::at;
         //using AssociativeContainer<Data>::insert_or_assign;
         //using AssociativeContainer<Data>::try_emplace;
 };
