@@ -19,6 +19,9 @@
     using typename Container<Data>::const_reverse_iterator; \
     using typename Container<Data>::reference; \
     using typename Container<Data>::const_reference; \
+    using typename Container<Data>::allocator_type; \
+    using typename Container<Data>::difference_type; \
+    using typename Container<Data>::pointer;
 
 namespace FRT
 {
@@ -39,6 +42,9 @@ class Container
         using const_reverse_iterator = typename Data::const_reverse_iterator;
         using reference = typename Data::reference;
         using const_reference = typename Data::const_reference;
+        using allocator_type = typename Data::allocator_type;
+        using difference_type = typename Data::difference_type;
+        using pointer = typename Data::pointer;
         
         Container () {};
 
@@ -65,6 +71,20 @@ class Container
         constexpr void lock () { mutex.lock(); }
 
         constexpr void unlock () { mutex.unlock(); }
+
+        friend std::ostream &operator<< (std::ostream &stream, const Container<Data> &container) 
+        { 
+            const auto lock = std::scoped_lock(container.mutex);
+            stream << "{ "; 
+            std::string separator; 
+            for (const auto &x : container.container) {
+                stream << separator << x; 
+                separator = ", ";
+            }
+            return stream << " }"; 
+        }
+
+        constexpr allocator_type get_allocator () const { return container.get_allocator(); }
 
         constexpr iterator begin () { return container.begin(); }
 
@@ -111,18 +131,6 @@ class Container
         {
             const auto lock = std::scoped_lock(mutex, other.mutex);
             container.swap(other->container);
-        }
-
-        friend std::ostream &operator<< (std::ostream &stream, const Container<Data> &container) 
-        { 
-            const auto lock = std::scoped_lock(container.mutex);
-            stream << "{ "; 
-            std::string separator; 
-            for (const auto &x : container.container) {
-                stream << separator << x; 
-                separator = ", ";
-            }
-            return stream << " }"; 
         }
 
     protected:
@@ -274,6 +282,26 @@ class Container
             const auto lock = std::scoped_lock(mutex);
             container.unique(p);
         }
+        
+        template <class Compare>
+        void sort (Compare comp)
+        {
+            const auto lock = std::scoped_lock(mutex);
+            container.sort(comp);
+        }
+
+        void merge (Container<Data> &&other)
+        {
+            const auto lock = std::scoped_lock(mutex, other.mutex);
+            container.merge(other);
+        }
+
+        template <class Compare>
+        void merge (Container<Data> &&other, Compare comp)
+        {
+            const auto lock = std::scoped_lock(mutex, other.mutex);
+            container.merge(other, comp);
+        }
 };
 
 template <typename Data>
@@ -333,7 +361,35 @@ class List : public SequenceContainer<Data>
         using Container<Data>::push_front;
         using Container<Data>::pop_front;
         using Container<Data>::emplace_front;
+        using Container<Data>::splice;
+        using Container<Data>::remove;
+        using Container<Data>::remove_if;
+        using Container<Data>::reverse;
+        using Container<Data>::unique;
+        using Container<Data>::sort;
+};
 
+template <typename Data>
+class AssociativeContainer : public Container<Data>
+{
+    public:
+        using Container<Data>::Container;
+
+        using Container<Data>::rbegin;
+        using Container<Data>::rend;
+        using Container<Data>::crbegin;
+        using Container<Data>::crend;
+        using Container<Data>::merge;
+};
+
+template <typename Key, typename Data = std::pmr::set<Key>>
+class Set
+{
+    public:
+        using AssociativeContainer<Data>::AssociativeContainer;
+        USING_TYPES
+
+        
 };
 
 /*
