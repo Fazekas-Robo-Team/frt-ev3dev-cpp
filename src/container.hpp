@@ -110,10 +110,10 @@ class Container
 
         // TODO: expand to functions with standard conforming signatures
         template <typename... Args> 
-        constexpr iterator insert (Args ...args)
+        constexpr void insert (Args ...args)
         {
             const auto lock = std::scoped_lock(mutex);
-            return container.insert(args...);
+            container.insert(args...);
         }
 
         template <typename... Args> 
@@ -135,6 +135,12 @@ class Container
         {
             const auto lock = std::scoped_lock(mutex, other.mutex);
             container.swap(other->container);
+        }
+
+        constexpr auto operator== (const Container<Data> &other) const
+        {
+            const auto lock = std::scoped_lock(mutex, other.mutex);
+            return container == other.container;
         }
 
     protected:
@@ -300,7 +306,7 @@ class Container
             container.merge(other, comp);
         }
 
-        constexpr auto operator<=> (const Container<Data> &other)
+        constexpr auto operator<=> (const Container<Data> &other) const
         {
             const auto lock = std::scoped_lock(mutex, other.mutex);
             return container <=> other.container;

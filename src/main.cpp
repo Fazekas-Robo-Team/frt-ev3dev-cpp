@@ -1,6 +1,7 @@
 #include "config.hpp"
 #include "logger.hpp"
 #include "container.hpp"
+#include "file.hpp"
 
 #include <iostream>
 #include <chrono>
@@ -14,19 +15,13 @@ int main ()
     std::cout.tie(0);
     std::cerr.tie(0);
 
-    auto start = high_resolution_clock::now();
+    auto file = FRT::File("asd");
 
-    FRT::Vector<std::string> vector;
-    FRT::Deque<std::string> deque;
-    FRT::List<std::string> list;
-    FRT::Set<std::string> set;
-    FRT::Map<std::string, std::string> map;
-    FRT::UnorderedSet<std::string> uset;
-    FRT::UnorderedMap<std::string, std::string> umap;
-    
+    file.write(69);
+    int i = file.read<int>();
 
-    const auto stop = high_resolution_clock::now();
-    const auto duration = duration_cast<nanoseconds>(stop - start);
+    file.write(69);
+    int j = file.read<int>();
 
-    FRT::Logger::info("time elapsed:", (float)duration.count() / 1e9);
+    FRT::Logger::info(i, j);
 }
