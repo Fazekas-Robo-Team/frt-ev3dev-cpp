@@ -55,21 +55,21 @@ class File
             const auto line = read_line(attempts);
 
             Set<std::string> result;
-            std::stringstream buffer;
+            std::string buffer;
 
             for (const char current_char : line) {
                 if (current_char == ' ') {
-                    if (!buffer.str().empty()) {
-                        result.insert(buffer.str());
+                    if (!buffer.empty()) {
+                        result.insert(buffer);
                         buffer.clear();
                     }
                     continue;
                 }
-                buffer << current_char;
+                buffer += current_char;
             }
 
-            if (!buffer.str().empty()) {
-                result.insert(buffer.str());
+            if (!buffer.empty()) {
+                result.insert(buffer);
             }
 
             return result;
@@ -83,25 +83,25 @@ class File
         {
             if constexpr (std::is_same_v<T, FRT::Set<std::string>>) {
                 return read_set(attempts);
-            }
+            } else {
+                if (attempts == 0) {
+                    Logger::error("File::read - attempts reached zero");
+                }
 
-            if (attempts == 0) {
-                Logger::error("File::read - attempts reached zero");
-            }
+                const auto lock = std::scoped_lock(mutex);
+                ensure_input();
 
-            const auto lock = std::scoped_lock(mutex);
-            ensure_input();
-
-            try {
-                T result;
-                input_stream >> result;
-                return result;
-            } 
-            catch (...) {
-                Logger::warning("File::read - read failed");
-                input_stream.close();
-                input_stream.clear();
-                return read<T>(attempts - 1);
+                try {
+                    T result;
+                    input_stream >> result;
+                    return result;
+                } 
+                catch (...) {
+                    Logger::warning("File::read - read failed");
+                    input_stream.close();
+                    input_stream.clear();
+                    return read<T>(attempts - 1);
+                }
             }
         }
 

@@ -17,11 +17,7 @@ int main ()
 
     auto file = FRT::File("asd");
 
-    file.write(69);
-    int i = file.read<int>();
+    const auto set = file.read<FRT::Set<std::string>>();
 
-    file.write(69);
-    int j = file.read<int>();
-
-    FRT::Logger::info(i, j);
+    FRT::Logger::info(set);
 }
