@@ -16,16 +16,17 @@ int main ()
 
     auto start = high_resolution_clock::now();
 
-    FRT::Vector<std::string> vector;
-    vector.resize(3);
+    std::pmr::vector<std::string> pmr;
+    
+    pmr.resize(3);
 
-    vector.lock();
-    for (auto &i : vector) {
+    for (auto &i : pmr) {
         std::cin >> i;
     }
-    FRT::Logger::info(vector);
 
-    vector.unlock();
+    FRT::Vector<std::string> frt(std::move(pmr));
+    
+    FRT::Logger::info(frt);
 
     const auto stop = high_resolution_clock::now();
     const auto duration = duration_cast<nanoseconds>(stop - start);
