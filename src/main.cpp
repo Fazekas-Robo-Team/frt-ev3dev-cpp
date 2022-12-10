@@ -16,17 +16,14 @@ int main ()
 
     auto start = high_resolution_clock::now();
 
-    std::pmr::vector<std::string> pmr;
+    FRT::Vector<std::string> vector;
+    FRT::Deque<std::string> deque;
+    FRT::List<std::string> list;
+    FRT::Set<std::string> set;
+    FRT::Map<std::string, std::string> map;
+    FRT::UnorderedSet<std::string> uset;
+    FRT::UnorderedMap<std::string, std::string> umap;
     
-    pmr.resize(3);
-
-    for (auto &i : pmr) {
-        std::cin >> i;
-    }
-
-    FRT::Vector<std::string> frt(std::move(pmr));
-    
-    FRT::Logger::info(frt);
 
     const auto stop = high_resolution_clock::now();
     const auto duration = duration_cast<nanoseconds>(stop - start);
