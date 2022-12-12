@@ -26,12 +26,13 @@ class File
             if (!input_stream.is_open()) {
                 input_stream.open(path);
             }
-
+            #ifdef SAFE
             if (!input_stream.is_open()) {
                 Logger::error("File::ensure_input - cannot open", path);
             }
 
             input_stream.clear();
+            #endif
             input_stream.seekg(0, std::ios::beg);
         }
 
@@ -50,13 +51,13 @@ class File
         }
 
         // template specialization workaround for reading sets
-        Set<std::string> read_set (int attempts = 2)
+        public: Set<std::string> read_set (int attempts = 2)
         {
             const auto line = read_line(attempts);
 
             Set<std::string> result;
             std::string buffer;
-
+            
             for (const char current_char : line) {
                 if (current_char == ' ') {
                     if (!buffer.empty()) {
@@ -67,7 +68,7 @@ class File
                 }
                 buffer += current_char;
             }
-
+            
             if (!buffer.empty()) {
                 result.insert(buffer);
             }
@@ -79,22 +80,32 @@ class File
         File (const std::string &path) : path(path) {}
 
         template <typename T>
-        T read (int attempts = 2)
+        T read (int attempts = 
+        #ifdef SAFE
+        2
+        #else
+        1
+        #endif
+        )
         {
-            if constexpr (std::is_same_v<T, FRT::Set<std::string>>) {
+            if constexpr (std::is_same_v<T, Set<std::string>>) {
                 return read_set(attempts);
             } else {
+                #ifdef SAFE
                 if (attempts == 0) {
                     Logger::error("File::read - attempts reached zero");
                 }
+                #endif
 
                 const auto lock = std::scoped_lock(mutex);
                 ensure_input();
-
+                #ifdef SAFE
                 try {
+                #endif
                     T result;
                     input_stream >> result;
                     return result;
+                #ifdef SAFE
                 } 
                 catch (...) {
                     Logger::warning("File::read - read failed");
@@ -102,6 +113,7 @@ class File
                     input_stream.clear();
                     return read<T>(attempts - 1);
                 }
+                #endif
             }
         }
 

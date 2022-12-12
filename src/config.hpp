@@ -12,3 +12,4 @@
 #define OUTPUT_C "ev3-ports:outC"
 #define OUTPUT_D "ev3-ports:outD"
 
+//#define SAFE

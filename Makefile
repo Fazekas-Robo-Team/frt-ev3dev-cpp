@@ -2,7 +2,7 @@ BUILD_DIR := build
 SRC_DIR := src
 BIN_DIR := bin
 EXECUTABLE := main
-CXXFLAGS := -O0 --std=c++20
+CXXFLAGS := -O3 --std=c++20
 
 include config.mk
 
@@ -12,7 +12,7 @@ OBJS := $(addsuffix .o,$(addprefix $(BUILD_DIR)/, $(notdir $(SRCS))))
 
 $(BIN_DIR)/$(EXECUTABLE): $(OBJS)
 	mkdir -p $(BIN_DIR)
-	$(CXX) -o $@ $^
+	$(CXX) -o $@ $^ 
 
 $(BUILD_DIR)/%.cpp.o: $(SRC_DIR)/%.cpp 
 	mkdir -p $(BUILD_DIR)
