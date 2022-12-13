@@ -2,6 +2,7 @@
 #include "logger.hpp"
 #include "container.hpp"
 #include "file.hpp"
+#include "device.hpp"
 
 #include <iostream>
 #include <chrono>
@@ -14,16 +15,13 @@ int main ()
 {
     std::ios_base::sync_with_stdio(false);
 
-    struct {
-        FRT::File driver_name = FRT::File("/sys/class/lego-sensor/sensor0/driver_name");
-        FRT::File modes = FRT::File("/sys/class/lego-sensor/sensor0/modes");
-        FRT::File mode = FRT::File("/sys/class/lego-sensor/sensor0/mode");
-        FRT::File value = FRT::File("/sys/class/lego-sensor/sensor0/value0");
-    } color_sensor;
-    int i = 0;
+    FRT::Sensor color = FRT::Sensor(INPUT_1);
+    color.attribute.mode.write("RGB-RAW");
     for (;;) {
-        for (int i = 0; i < 999; i++) color_sensor.value.read<int>();
-        FRT::Logger::info( i );
-        i++;
+        int r = color.attribute.value[0].read<int>();
+        int g = color.attribute.value[1].read<int>();
+        int b = color.attribute.value[2].read<int>();
+        FRT::Logger::info(r, g, b);
     }
+
 }
