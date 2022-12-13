@@ -21,18 +21,17 @@ class File
         std::ofstream output_stream;
         mutable std::recursive_mutex mutex;
 
+        template <bool silent = false>
         void ensure_input ()
         {
             if (!input_stream.is_open()) {
                 input_stream.open(path);
-            }
-            #ifdef SAFE
-            if (!input_stream.is_open()) {
-                Logger::error("File::ensure_input - cannot open", path);
+                if (!input_stream.is_open()) {
+                    if constexpr (!silent) Logger::error("File::ensure_input - cannot open", path);
+                }
             }
 
             input_stream.clear();
-            #endif
             input_stream.seekg(0, std::ios::beg);
         }
 
@@ -79,41 +78,30 @@ class File
     public:
         File (const std::string &path) : path(path) {}
 
-        template <typename T>
-        T read (int attempts = 
-        #ifdef SAFE
-        2
-        #else
-        1
-        #endif
-        )
+        template <typename T, bool silent = false>
+        T read (int attempts = 2)
         {
             if constexpr (std::is_same_v<T, Set<std::string>>) {
                 return read_set(attempts);
             } else {
-                #ifdef SAFE
                 if (attempts == 0) {
-                    Logger::error("File::read - attempts reached zero");
+                    if constexpr (!silent) Logger::error("File::read - attempts reached zero");
                 }
-                #endif
 
                 const auto lock = std::scoped_lock(mutex);
-                ensure_input();
-                #ifdef SAFE
+                ensure_input<silent>();
+
                 try {
-                #endif
                     T result;
                     input_stream >> result;
                     return result;
-                #ifdef SAFE
                 } 
                 catch (...) {
-                    Logger::warning("File::read - read failed");
+                    if constexpr (!silent) Logger::warning("File::read - read failed");
                     input_stream.close();
                     input_stream.clear();
                     return read<T>(attempts - 1);
                 }
-                #endif
             }
         }
 
