@@ -5,6 +5,7 @@
 
 #include <dirent.h>
 #include <cstring>
+#include <cmath>
 
 #define INPUT_1 "ev3-ports:in1"
 #define INPUT_2 "ev3-ports:in2"
@@ -111,7 +112,7 @@ class TachoMotorInterface : public Device
         FRT::File max_speed = attribute("max_speed");
         FRT::File position_sp = attribute("position_sp");
         FRT::File speed = attribute("speed");
-        FRT::File speed_up = attribute("speed_up");
+        FRT::File speed_sp = attribute("speed_sp");
         FRT::File ramp_up_sp = attribute("ramp_up_sp");
         FRT::File ramp_down_sp = attribute("ramp_down_sp");
         FRT::File speed_pid_kd = attribute("speed_pid/Kd");
@@ -126,15 +127,224 @@ class TachoMotorInterface : public Device
 class Sensor
 {
     public:
-        SensorInterface attribute;
-        Sensor (const std::string &port) : attribute("lego-sensor/", port) {} 
+        SensorInterface attributes;
+        Sensor (const std::string &port) : attributes("lego-sensor/", port) {} 
 };
+
+struct _cm { _cm (double value) : value(value) {} double value; };
+struct _degrees { _degrees (double value) : value(value) {} double value; };
+struct _radian { _radian (double value) : value(value) {} double value; };
+
+_cm operator""cm (const long double value) { return _cm(value); }
+_degrees operator""deg (const long double value) { return _degrees(value); }
+_radian operator""rad (const long double value) { return _radian(value); }
+_cm operator""cm (const unsigned long long value) { return _cm(value); }
+_degrees operator""deg (const unsigned long long value) { return _degrees(value); }
+_radian operator""rad (const unsigned long long value) { return _radian(value); }
 
 class TachoMotor
 {
     public:
-        TachoMotorInterface attribute;
-        TachoMotor (const std::string &port) : attribute("tacho-motor/", port) {} 
+        TachoMotorInterface attributes;
+
+        // constant attributes
+        const double diameter;
+        const std::string port;
+        const FRT::Set<std::string> supported_modes;
+        const int pulses_per_rotation;
+        const std::string driver_name;
+        const int max_speed;
+        const FRT::Set<std::string> supported_stop_actions;
+
+        TachoMotor (const std::string &port, const _cm diameter) 
+        :   attributes("tacho-motor/", port),
+            diameter(diameter.value),
+            port(attributes.address.read<std::string>()),
+            supported_modes(attributes.commands.read<FRT::Set<std::string>>()),
+            pulses_per_rotation(attributes.count_per_rot.read<int>()),
+            driver_name(attributes.driver_name.read<std::string>()),
+            max_speed(attributes.max_speed.read<int>()),
+            supported_stop_actions(attributes.stop_actions.read<FRT::Set<std::string>>())
+        {}
+
+        static struct {
+            const std::string run_forever = "run-forever";
+            const std::string run_to_absolute_position = "run-to-abs-pos";
+            const std::string run_to_relative_position = "run-to-rel-pos";
+            const std::string run_timed = "run-timed";
+            const std::string run_direct = "run-direct";
+            const std::string stop = "stop";
+            const std::string reset = "reset";
+        } modes;
+
+        static struct {
+            const std::string normal = "normal";
+            const std::string inversed = "inversed";
+        } polarities;
+
+        static struct {
+            const std::string running = "running";
+            const std::string ramping = "ramping";
+            const std::string holding = "holding";
+            const std::string overloaded = "overloaded";
+            const std::string stalled = "stalled";
+        } states;
+
+        static struct {
+            const std::string coast = "coast";
+            const std::string brake = "brake";
+            const std::string hold = "hold";
+        } stop_actions;
+
+        struct {
+            double position_coefficient = 1;
+        } config;
+
+        double pulse_cast (const _degrees value) { return value.value / 360 * pulses_per_rotation; }
+        double pulse_cast (const _radian value) { return value.value / acos(-1) * pulses_per_rotation; }
+        double pulse_cast (const _cm value) { return value.value / diameter / acos(-1) * pulses_per_rotation; }
+        double pulse_cast (const double value) { return value; }
+
+        std::string get_mode ()
+        {
+            return attributes.command.read<std::string>();
+        }
+
+        void set_mode (const std::string &value) 
+        {
+            attributes.command.write(value);
+        }
+
+        std::string get_stop_action ()
+        {
+            return attributes.stop_action.read<std::string>();
+        }
+
+        void set_stop_action (const std::string &value) 
+        {
+            attributes.stop_action.write(value);
+        }
+
+        int get_duty_cycle () 
+        {
+            return attributes.duty_cycle.read<int>();
+        }
+
+        int get_duty_cycle_setpoint ()
+        {
+            return attributes.duty_cycle_sp.read<int>();
+        }
+
+        void set_duty_cycle_setpoint (const int value)
+        {
+            return attributes.duty_cycle_sp.write(value);
+        }
+
+        std::string get_polarity () 
+        {
+            return attributes.polarity.read<std::string>();
+        }
+
+        void set_polarity (const std::string &value) 
+        {
+            attributes.polarity.write<std::string>(value);
+        }
+
+        FRT::Vector<int> get_hold_pid ()
+        {
+            const int kp = attributes.hold_pid_kp.read<int>();
+            const int ki = attributes.hold_pid_ki.read<int>();
+            const int kd = attributes.hold_pid_kd.read<int>();
+            return { kp, ki, kd };
+        }
+
+        void set_hold_pid (const int kp, const int ki, const int kd)
+        {
+            attributes.hold_pid_kp.write(kp);
+            attributes.hold_pid_ki.write(ki);
+            attributes.hold_pid_kd.write(kd);
+        }
+
+        FRT::Vector<int> get_speed_pid ()
+        {
+            const int kp = attributes.speed_pid_kp.read<int>();
+            const int ki = attributes.speed_pid_ki.read<int>();
+            const int kd = attributes.speed_pid_kd.read<int>();
+            return { kp, ki, kd };
+        }
+
+        void set_speed_pid (const int kp, const int ki, const int kd)
+        {
+            attributes.speed_pid_kp.write(kp);
+            attributes.speed_pid_ki.write(ki);
+            attributes.speed_pid_kd.write(kd);
+        }
+
+        int get_position_setpoint ()
+        {
+            return attributes.position_sp.read<int>();
+        }
+
+        template <typename Unit>
+        void set_position_setpoint (const Unit &value)
+        {
+            const int pulses = pulse_cast(value) / config.position_coefficient;
+            attributes.position_sp.write(pulses);
+        }
+
+        double get_position ()
+        {
+            return config.position_coefficient * attributes.position.read<int>();
+        }
+
+        template <typename Unit>
+        void set_position (const Unit &value)
+        {
+            const int pulses = pulse_cast(value) / config.position_coefficient;
+            attributes.position.write(pulses);
+        }
+
+        int get_speed ()
+        {
+            return attributes.speed.read<int>();
+        }
+
+        int get_speed_setpoint ()
+        {
+            return attributes.speed_sp.read<int>();
+        }
+
+        template <typename Unit>
+        void set_speed_setpoint (const Unit &value)
+        {
+            const int pulses = pulse_cast(value);
+            attributes.speed_sp.write(pulses);
+        }
+
+        int get_ramp_up_setpoint ()
+        {
+            return attributes.ramp_up_sp.read<int>();
+        }
+
+        void set_ramp_up_setpoint (const int milliseconds)
+        {
+            attributes.ramp_up_sp.write(milliseconds);
+        }
+
+        int get_ramp_down_setpoint ()
+        {
+            return attributes.ramp_down_sp.read<int>();
+        }
+
+        void set_ramp_down_setpoint (const int milliseconds)
+        {
+            attributes.ramp_down_sp.write(milliseconds);
+        }
+
+        std::string get_state ()
+        {
+            return attributes.state.read<std::string>();
+        }
 };
 
 }
