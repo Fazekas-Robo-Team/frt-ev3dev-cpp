@@ -58,7 +58,7 @@ class Device
             FRT::Logger::error("Device::connect - failed, address:", address);
         }
 
-
+        virtual ~Device () {};
 };
 
 class SensorInterface : public Device
@@ -167,7 +167,9 @@ class TachoMotor
             supported_stop_actions(attributes.stop_actions.read<FRT::Set<std::string>>())
         {}
 
-        static struct {
+        TachoMotor (const TachoMotor &) = default;
+
+        static const struct {
             const std::string run_forever = "run-forever";
             const std::string run_to_absolute_position = "run-to-abs-pos";
             const std::string run_to_relative_position = "run-to-rel-pos";
@@ -177,12 +179,12 @@ class TachoMotor
             const std::string reset = "reset";
         } modes;
 
-        static struct {
+        static const struct {
             const std::string normal = "normal";
             const std::string inversed = "inversed";
         } polarities;
 
-        static struct {
+        static const struct {
             const std::string running = "running";
             const std::string ramping = "ramping";
             const std::string holding = "holding";
@@ -190,7 +192,7 @@ class TachoMotor
             const std::string stalled = "stalled";
         } states;
 
-        static struct {
+        static const struct {
             const std::string coast = "coast";
             const std::string brake = "brake";
             const std::string hold = "hold";
