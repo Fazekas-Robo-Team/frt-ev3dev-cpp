@@ -3,56 +3,35 @@
 #include "container.hpp"
 #include "file.hpp"
 #include "device.hpp"
+#include "utility.hpp"
 
 #include <iostream>
 #include <chrono>
 #include <thread>
 
-using namespace std::chrono;
-using namespace std::chrono_literals;
-
 using namespace FRT;
-
-int clamp (const int value, const int min, const int max)
-{
-    return std::min(std::max(value, min), max);
-}
 
 int main () 
 {
     std::ios_base::sync_with_stdio(false);
-
-    /*Sensor color = Sensor(INPUT_1);
-    color.attributes.mode.write("RGB-RAW");
-    for (;;) {
-        int r = color.attributes.value[0].read<int>();
-        int g = color.attributes.value[1].read<int>();
-        int b = color.attributes.value[2].read<int>();
-        Logger::info(r, g, b);
-    }*/
-
-    auto left = TachoMotor(OUTPUT_A, /* diameter */ 5.6cm);
-    auto right = TachoMotor(OUTPUT_B, /* diameter */ 5.6cm);
     
-    left.set_position(0);
-    right.set_position(0);
+    auto left = TachoMotor(OUTPUT_A, 62.0mm);
+    auto right = TachoMotor(OUTPUT_B, 62.0mm);
 
-    left.config.position_coefficient = 1.0075;
-    
-    double base = 0;
-    while (true) {
-        double lp = left.get_position(), rp = right.get_position();
-        if (base < 80) base += 0.5;
-        double error = (lp - rp) / 80 * base;
+    left.set_polarity( TachoMotor::polarities::inversed );
 
-        int ls = clamp(round(base - error), -100, 100), rs = clamp(round(base + error), -100, 100);
+    /*left.set_position_setpoint(1.5m);
+    right.set_position_setpoint(1.5m);
 
-        left.set_duty_cycle_setpoint(ls);
-        right.set_duty_cycle_setpoint(rs);
+    left.set_speed_setpoint(800.0deg);
+    right.set_speed_setpoint(800.0deg);
 
-        left.set_mode( "run-direct" );
-        right.set_mode( "run-direct" );
+    left.set_mode( left.modes.run_to_relative_position );
+    right.set_mode( right.modes.run_to_relative_position );
 
-        FRT::Logger::info( lp, rp, ls, rs );
+    sleep(100ms);*/
+
+    while (left.get_state() != TachoMotor::states::holding) {
+        Logger::info( left.get_position<_cm>(), right.get_position<_cm>() );
     }
 }

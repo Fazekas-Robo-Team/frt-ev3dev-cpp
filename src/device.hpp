@@ -2,6 +2,7 @@
 
 #include "file.hpp"
 #include "logger.hpp"
+#include "utility.hpp"
 
 #include <dirent.h>
 #include <cstring>
@@ -81,13 +82,23 @@ class SensorInterface : public Device
         FRT::File poll_ms = attribute("poll_ms");
         FRT::File units = attribute("units");
         FRT::File text_value = attribute("text_value");
-        FRT::File value[5] = {
+        FRT::File value[8] = {
             { "value0" }, 
             { "value1" }, 
             { "value2" }, 
             { "value3" }, 
             { "value4" },
+            { "value5" },
+            { "value6" },
+            { "value7" },
         };
+};
+
+class Sensor
+{
+    public:
+        SensorInterface attributes;
+        Sensor (const std::string &port) : attributes("lego-sensor/", port) {} 
 };
 
 class TachoMotorInterface : public Device
@@ -124,31 +135,13 @@ class TachoMotorInterface : public Device
         FRT::File time_sp = attribute("time_sp");
 };
 
-class Sensor
-{
-    public:
-        SensorInterface attributes;
-        Sensor (const std::string &port) : attributes("lego-sensor/", port) {} 
-};
-
-struct _cm { _cm (double value) : value(value) {} double value; };
-struct _degrees { _degrees (double value) : value(value) {} double value; };
-struct _radian { _radian (double value) : value(value) {} double value; };
-
-_cm operator""cm (const long double value) { return _cm(value); }
-_degrees operator""deg (const long double value) { return _degrees(value); }
-_radian operator""rad (const long double value) { return _radian(value); }
-_cm operator""cm (const unsigned long long value) { return _cm(value); }
-_degrees operator""deg (const unsigned long long value) { return _degrees(value); }
-_radian operator""rad (const unsigned long long value) { return _radian(value); }
-
 class TachoMotor
 {
     public:
         TachoMotorInterface attributes;
 
         // constant attributes
-        const double diameter;
+        const _m diameter;
         const std::string port;
         const FRT::Set<std::string> supported_modes;
         const int pulses_per_rotation;
@@ -156,56 +149,70 @@ class TachoMotor
         const int max_speed;
         const FRT::Set<std::string> supported_stop_actions;
 
-        TachoMotor (const std::string &port, const _cm diameter) 
+        template <typename Unit>
+        TachoMotor (const std::string &port, const Unit diameter, const bool initialize = true) 
         :   attributes("tacho-motor/", port),
-            diameter(diameter.value),
+            diameter(length_cast<_m>(diameter)),
             port(attributes.address.read<std::string>()),
             supported_modes(attributes.commands.read<FRT::Set<std::string>>()),
             pulses_per_rotation(attributes.count_per_rot.read<int>()),
             driver_name(attributes.driver_name.read<std::string>()),
             max_speed(attributes.max_speed.read<int>()),
             supported_stop_actions(attributes.stop_actions.read<FRT::Set<std::string>>())
-        {}
+        {
+            if (!initialize) return;
+
+            set_position(0);
+        }
 
         TachoMotor (const TachoMotor &) = default;
 
-        static const struct {
-            const std::string run_forever = "run-forever";
-            const std::string run_to_absolute_position = "run-to-abs-pos";
-            const std::string run_to_relative_position = "run-to-rel-pos";
-            const std::string run_timed = "run-timed";
-            const std::string run_direct = "run-direct";
-            const std::string stop = "stop";
-            const std::string reset = "reset";
-        } modes;
+        /*struct modes {
+            static constexpr std::string_view run_forever = "run-forever";
+            static constexpr std::string_view run_to_absolute_position = "run-to-abs-pos";
+            static constexpr std::string_view run_to_relative_position = "run-to-rel-pos";
+            static constexpr std::string_view run_timed = "run-timed";
+            static constexpr std::string_view run_direct = "run-direct";
+            static constexpr std::string_view stop = "stop";
+            static constexpr std::string_view reset = "reset";
+        };*/
 
-        static const struct {
-            const std::string normal = "normal";
-            const std::string inversed = "inversed";
-        } polarities;
+        struct polarities {
+            static constexpr auto &normal = "normal";
+            static constexpr auto &inversed = "inversed";
+        };
 
-        static const struct {
-            const std::string running = "running";
-            const std::string ramping = "ramping";
-            const std::string holding = "holding";
-            const std::string overloaded = "overloaded";
-            const std::string stalled = "stalled";
-        } states;
+        struct states {
+            static constexpr auto &running = "running";
+            static constexpr auto &ramping = "ramping";
+            static constexpr auto &holding = "holding";
+            static constexpr auto &overloaded = "overloaded";
+            static constexpr auto &stalled = "stalled";
+        };
 
-        static const struct {
+        /*struct stop_actions {
             const std::string coast = "coast";
             const std::string brake = "brake";
             const std::string hold = "hold";
-        } stop_actions;
+        };*/
 
         struct {
             double position_coefficient = 1;
         } config;
 
-        double pulse_cast (const _degrees value) { return value.value / 360 * pulses_per_rotation; }
-        double pulse_cast (const _radian value) { return value.value / acos(-1) * pulses_per_rotation; }
-        double pulse_cast (const _cm value) { return value.value / diameter / acos(-1) * pulses_per_rotation; }
-        double pulse_cast (const double value) { return value; }
+        template <typename Unit>
+        constexpr Unit pulses_to_units (const double pulses)
+        {
+            const auto value = FRT::pulses_to_units<Unit>(pulses, diameter, pulses_per_rotation);
+            return value * config.position_coefficient;
+        }
+
+        template <typename Unit>
+        constexpr int units_to_pulses (const Unit &value)
+        {
+            const auto pulses = FRT::units_to_pulses(value, diameter, pulses_per_rotation);
+            return round(value / config.position_coefficient);
+        }
 
         std::string get_mode ()
         {
@@ -282,47 +289,56 @@ class TachoMotor
             attributes.speed_pid_kd.write(kd);
         }
 
-        int get_position_setpoint ()
+        template <typename Unit>
+        Unit get_position_setpoint ()
         {
-            return attributes.position_sp.read<int>();
+            const auto pulses = attributes.position_sp.read<int>();
+            return TachoMotor::pulses_to_units<Unit>(pulses);
         }
 
         template <typename Unit>
         void set_position_setpoint (const Unit &value)
         {
-            const int pulses = pulse_cast(value) / config.position_coefficient;
+            const auto pulses = TachoMotor::units_to_pulses(value);
             attributes.position_sp.write(pulses);
         }
 
-        double get_position ()
+        template <typename Unit>
+        Unit get_position ()
         {
-            return config.position_coefficient * attributes.position.read<int>();
+            const auto pulses = attributes.position.read<int>();
+            return TachoMotor::pulses_to_units<Unit>(pulses);
         }
 
         template <typename Unit>
         void set_position (const Unit &value)
         {
-            const int pulses = pulse_cast(value) / config.position_coefficient;
+            const auto pulses = TachoMotor::units_to_pulses(value);
             attributes.position.write(pulses);
         }
 
-        int get_speed ()
+        template <typename Unit>
+        Unit get_speed ()
         {
-            return attributes.speed.read<int>();
+            const auto pulses = attributes.speed.read<int>();
+            return TachoMotor::pulses_to_units<Unit>(pulses);
         }
 
-        int get_speed_setpoint ()
+        template <typename Unit>
+        Unit get_speed_setpoint ()
         {
-            return attributes.speed_sp.read<int>();
+            const auto pulses = attributes.speed_sp.read<int>();
+            return TachoMotor::pulses_to_units<Unit>(pulses);
         }
 
         template <typename Unit>
         void set_speed_setpoint (const Unit &value)
         {
-            const int pulses = pulse_cast(value);
+            const auto pulses = TachoMotor::units_to_pulses(value);
             attributes.speed_sp.write(pulses);
         }
 
+        /// @return Milliseconds.
         int get_ramp_up_setpoint ()
         {
             return attributes.ramp_up_sp.read<int>();
@@ -333,6 +349,7 @@ class TachoMotor
             attributes.ramp_up_sp.write(milliseconds);
         }
 
+        /// @return Milliseconds.
         int get_ramp_down_setpoint ()
         {
             return attributes.ramp_down_sp.read<int>();

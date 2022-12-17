@@ -3,3 +3,4 @@ build/**
 toolchain/**
 config.mk
 bin/main
+.VSCodeCounter
