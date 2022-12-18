@@ -1,37 +1,65 @@
-#include "config.hpp"
 #include "logger.hpp"
-#include "container.hpp"
-#include "file.hpp"
-#include "device.hpp"
 #include "utility.hpp"
-
-#include <iostream>
-#include <chrono>
-#include <thread>
+#include "motor.hpp"
+#include "sensor.hpp"
+#include "tank.hpp"
+#include "scheduler.hpp"
 
 using namespace FRT;
 
+class Robot : public Tank
+{
+    public:
+        using Tank::Tank;
+
+        void run ()
+        {
+            left_motor.set_polarity(TachoMotor::polarities::inversed);
+            left_motor.config.position_coefficient = 1.0075;
+
+            on_for_segment(150.0cm, 1020.0deg, 1020.0deg);
+        }
+};
+
 int main () 
 {
-    std::ios_base::sync_with_stdio(false);
-    
-    auto left = TachoMotor(OUTPUT_A, 62.0mm);
-    auto right = TachoMotor(OUTPUT_B, 62.0mm);
+    /*auto left = TachoMotor(OUTPUT_A, 6.2mm);
+    auto right = TachoMotor(OUTPUT_B, 6.2mm);
+    Robot(left, right).run();*/
 
-    left.set_polarity( TachoMotor::polarities::inversed );
+    auto scheduler = Scheduler(100);
 
-    /*left.set_position_setpoint(1.5m);
-    right.set_position_setpoint(1.5m);
+    int *i_ = new int;
+    *i_ = 0;
+    Task task1 = Task(
+        [i_] (Scheduler &s) mutable {
+            int &i = *i_;
 
-    left.set_speed_setpoint(800.0deg);
-    right.set_speed_setpoint(800.0deg);
+            if (i < 500) {
+                i++;
+                FRT::Logger::info(i);
+            } else {
+                s.cancel();
+            }
+        }
+    , {});
 
-    left.set_mode( left.modes.run_to_relative_position );
-    right.set_mode( right.modes.run_to_relative_position );
+    int *k_ = new int;
+    *k_ = 0;
+    Task task2 = Task(
+        [k_] (Scheduler &s) mutable {
+            int &k = *k_;
 
-    sleep(100ms);*/
+            if (k < 500) {
+                k++;
+                FRT::Logger::info(k);
+            } else {
+                s.cancel();
+            }
+        }
+    , {});
 
-    while (left.get_state() != TachoMotor::states::holding) {
-        Logger::info( left.get_position<_cm>(), right.get_position<_cm>() );
-    }
+    scheduler.create_task(task1);
+    scheduler.create_task(task2);
+    scheduler.run();
 }

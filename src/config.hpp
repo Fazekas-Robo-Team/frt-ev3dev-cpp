@@ -1,3 +1,15 @@
 #pragma once
 
-#define LOG_LEVEL 10
+namespace FRT
+{
+    enum class log_levels 
+    {
+        off,
+        error,
+        warning,
+        info,
+        debug,
+    };
+
+    const inline auto log_level = log_levels::debug;
+}; // namespace

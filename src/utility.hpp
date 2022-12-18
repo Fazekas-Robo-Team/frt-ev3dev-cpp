@@ -5,9 +5,10 @@
 #include <chrono>
 #include <thread>
 
-namespace FRT {
-
 using namespace std::chrono_literals;
+
+namespace FRT 
+{
 
 const long double pi = acos(-1);
 
@@ -25,11 +26,13 @@ inline void sleep (const T &value)
     std::this_thread::sleep_for(value);
 }
 
-/// @returns Timestamp in seconds.
+/// @returns Timestamp in seconds with the resolution of microseconds.
 inline double time ()
 {
-    const auto now = std::chrono::system_clock::now();
-    const auto ms = duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    using namespace std::chrono;
+
+    const auto now = system_clock::now();
+    const auto ms = duration_cast<microseconds>(now.time_since_epoch());
     return (double)ms.count() / 1e6;
 }
 

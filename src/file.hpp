@@ -10,51 +10,72 @@
 
 #include <errno.h>
 
+#include <sys/inotify.h>
+#include <unistd.h>
+
 namespace FRT
 {
 
 class File
 {
-    private:
+    protected:
+        /// @brief Full filesystem path of the file.
         std::string path;
+
+        /// @brief Encapsulated std::ifstream object.
         std::ifstream input_stream;
+
+        /// @brief Encapsulated std::ofstream object.
         std::ofstream output_stream;
+
+        /// @brief Intended to make the streams thread-safe. Methods doing I/O should always lock it.
         mutable std::recursive_mutex mutex;
 
+        int file_descriptor;
+
+        /// @brief Ensures that input_stream is open and points to the beginning of the file.
+        /// @tparam silent Option to suppress error messages. Useful when probing for devices. Defaults to false.
         template <bool silent = false>
         void ensure_input ()
         {
             if (!input_stream.is_open()) {
                 input_stream.open(path);
+
                 if (!input_stream.is_open()) {
-                    if constexpr (!silent) Logger::error("File::ensure_input - cannot open", path);
+                    if constexpr (!silent) {
+                        Logger::error("File::ensure_input - cannot open", path);
+                    }
                 }
             }
-
+            // getting rid of error state flags like EOF
             input_stream.clear();
+            // changing the read position to the beginning of the file
             input_stream.seekg(0, std::ios::beg);
         }
 
+        /// @brief Ensures that output_stream is open.
         void ensure_output ()
         {
             if (!output_stream.is_open()) {
                 output_stream.rdbuf()->pubsetbuf(NULL, 0);
                 output_stream.open(path);
-            } 
 
-            if (!output_stream.is_open()) {
-                Logger::error("File::ensure_input - cannot open", path);
+                if (!output_stream.is_open()) {
+                    Logger::error("File::ensure_input - cannot open", path);
+                }
             }
 
             output_stream.clear();
         }
 
-        // template specialization workaround for reading sets
-        public: Set<std::string> read_set (int attempts = 2)
+        /// @brief Template specialization workaround for reading sets. Used by File::read.
+        /// @param attempts Passed to File::read_line.
+        /// @return 
+        Set<std::string> read_set (int attempts = 2)
         {
             const auto line = read_line(attempts);
 
-            Set<std::string> result;
+            std::pmr::set<std::string> result;
             std::string buffer;
             
             for (const char current_char : line) {
@@ -72,12 +93,18 @@ class File
                 result.insert(buffer);
             }
 
-            return result;
+            return { std::move(result) };
         }
 
     public:
         File (const std::string &path) : path(path) {}
 
+        virtual ~File () {}
+
+        /// @brief Reads data from the beginning of the file. Reading strings stops at any whitespace, see File::read_line if needed.
+        /// @tparam T Type of data to read. Arithmetic types, std::string and FRT::Set are typical.
+        /// @tparam silent Option to suppress error messages. Useful when probing for devices. Defaults to false.
+        /// @param attempts Determines how many times to retry in case of failure. Defaults to two.
         template <typename T, bool silent = false>
         T read (int attempts = 2)
         {
@@ -105,6 +132,8 @@ class File
             }
         }
 
+        /// @brief Reads a whole line from the beginning of the file.
+        /// @param attempts Determines how many times to retry in case of failure. Defaults to two.
         std::string read_line (int attempts = 2)
         {
             if (attempts == 0) {
@@ -122,11 +151,13 @@ class File
             catch (...) {
                 Logger::warning("File::read_line - read failed");
                 input_stream.close();
-                input_stream.clear();
                 return read_line(attempts - 1);
             }
         }
 
+        /// @brief Writes data to the file.
+        /// @tparam T Type of data to write. Arithmetic types and std::string are typical.
+        /// @param attempts Determines how many times to retry in case of failure. Defaults to two.
         template <typename T>
         void write (const T &value, int attempts = 2)
         {
@@ -143,8 +174,14 @@ class File
 
             Logger::warning("File::write - write failed, ERRNO:", errno);
             output_stream.close();
-            output_stream.clear();
             return write<T>(value, attempts - 1);
+        }
+
+        void wait ()
+        {
+            const auto file_descriptor = inotify_init();
+            const auto watch_descriptor = inotify_add_watch(file_descriptor, path.c_str(), IN_MODIFY);
+            ::read(file_descriptor, 0, 0);
         }
 };
 

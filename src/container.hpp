@@ -253,11 +253,17 @@ class Container
         }
 
         // TODO: expand to functions with standard conforming signatures
-        template <typename... Args>
+        /*template <typename... Args>
         constexpr void splice (Args ...args)
         {
             const auto lock = std::scoped_lock(mutex);
             container.splice(args...);
+        }*/
+
+        constexpr void splice (const_iterator pos, Container<Data> &other)
+        {
+            const auto lock = std::scoped_lock(mutex, other.mutex);
+            container.splice(pos, other.container);
         }
 
         constexpr size_type remove (const value_type &value)

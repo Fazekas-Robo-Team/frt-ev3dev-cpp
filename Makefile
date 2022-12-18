@@ -2,7 +2,7 @@ BUILD_DIR := build
 SRC_DIR := src
 BIN_DIR := bin
 EXECUTABLE := main
-CXXFLAGS := -O3 --std=c++20
+CXXFLAGS := -O3 --std=c++20 -lm -pthread
 
 include config.mk
 

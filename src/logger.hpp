@@ -7,6 +7,7 @@
 #include <ctime>
 #include <sstream>
 #include <chrono>
+#include <mutex>
 
 namespace FRT
 {
@@ -19,49 +20,56 @@ std::ostream &operator<< (std::ostream &os, const std::pair<A, B> &p)
 
 class Logger 
 {
+    private:
+        static std::mutex mutex;
+
     public:
         template <typename... Args>
         static inline void error (Args... args) 
         {
-            #if LOG_LEVEL >= 1
-            std::cout << "\u001b[31;1m[";
-            print_time();
-            std::cout << " ERROR]  ";
-            print(args...);
-            #endif
+            if constexpr (log_level >= log_levels::error) {
+                const auto lock = std::scoped_lock(mutex);
+                std::cout << "\u001b[31;1m[";
+                print_time();
+                std::cout << " ERROR]  ";
+                print(args...);
+            }
         }
 
         template <typename... Args>
         static inline void warning (Args... args) 
         {
-            #if LOG_LEVEL >= 2
-            std::cout << "\u001b[33;1m[";
-            print_time();
-            std::cout << " WARNING]";
-            print(args...);
-            #endif
+            if constexpr (log_level >= log_levels::warning) {
+                const auto lock = std::scoped_lock(mutex);
+                std::cout << "\u001b[33;1m[";
+                print_time();
+                std::cout << " WARNING]";
+                print(args...);
+            }
         }
 
         template <typename... Args>
         static inline void info (Args... args) 
         {
-            #if LOG_LEVEL >= 3
-            std::cout << "\u001b[0m[";
-            print_time();
-            std::cout << " INFO]   ";
-            print(args...);
-            #endif
+            if constexpr (log_level >= log_levels::info) {
+                const auto lock = std::scoped_lock(mutex);
+                std::cout << "\u001b[0m[";
+                print_time();
+                std::cout << " INFO]   ";
+                print(args...);
+            }
         }
 
         template <typename... Args>
         static inline void debug (Args... args) 
         {
-            #if LOG_LEVEL >= 4
-            std::cout << "\u001b[0m[";
-            print_time();
-            std::cout << " DEBUG]  ";
-            print(args...);
-            #endif
+            if constexpr (log_level >= log_levels::debug) {
+                const auto lock = std::scoped_lock(mutex);
+                std::cout << "\u001b[0m[";
+                print_time();
+                std::cout << " DEBUG]  ";
+                print(args...);
+            }
         }
 
     private:
@@ -90,5 +98,7 @@ class Logger
             std::cout << std::endl;
         }
 };
+
+std::mutex Logger::mutex = std::mutex();
 
 } // namespace
