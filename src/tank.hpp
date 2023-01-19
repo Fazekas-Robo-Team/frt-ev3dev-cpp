@@ -7,12 +7,8 @@ namespace FRT
 
 class Tank
 {
-    protected:
-        TachoMotor &left_motor, &right_motor;
-
-        virtual ~Tank () {}
-
-        Tank (const Tank &) = delete;
+    public:
+        TachoMotor &left, &right;
 
         template <typename LeftUnit, typename RightUnit, bool block = false>
         void on (const LeftUnit &left_velocity, const RightUnit &right_velocity)
@@ -35,14 +31,17 @@ class Tank
             left_motor.on_to_position<block, brake>(position, right_velocity);
         }
 
-    public:
         Tank (TachoMotor &left_motor, TachoMotor &right_motor)
         :   left_motor(left_motor), right_motor(right_motor) 
         {
             std::ios_base::sync_with_stdio(false);
         }
 
-        virtual void run () = 0;
+        Tank (const Tank &) = delete;
+
+        virtual ~Tank () {}
+
+        //virtual void run () = 0;
 };
 
 }; // namespace
