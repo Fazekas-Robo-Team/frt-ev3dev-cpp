@@ -19,22 +19,12 @@ namespace FRT
 class File
 {
     protected:
-        /// @brief Full filesystem path of the file.
         std::string path;
-
-        /// @brief Encapsulated std::ifstream object.
         std::ifstream input_stream;
-
-        /// @brief Encapsulated std::ofstream object.
         std::ofstream output_stream;
-
-        /// @brief Intended to make the streams thread-safe. Methods doing I/O should always lock it.
         mutable std::recursive_mutex mutex;
+        const int file_descriptor;
 
-        int file_descriptor;
-
-        /// @brief Ensures that input_stream is open and points to the beginning of the file.
-        /// @tparam silent Option to suppress error messages. Useful when probing for devices. Defaults to false.
         template <bool silent = false>
         void ensure_input ()
         {
@@ -53,7 +43,6 @@ class File
             input_stream.seekg(0, std::ios::beg);
         }
 
-        /// @brief Ensures that output_stream is open.
         void ensure_output ()
         {
             if (!output_stream.is_open()) {
@@ -68,9 +57,6 @@ class File
             output_stream.clear();
         }
 
-        /// @brief Template specialization workaround for reading sets. Used by File::read.
-        /// @param attempts Passed to File::read_line.
-        /// @return 
         std::vector<std::string> read_set (int attempts = 2)
         {
             const auto line = read_line(attempts);
@@ -97,7 +83,9 @@ class File
         }
 
     public:
-        File (const std::string &path) : path(path) {}
+        File (const std::string &path) 
+        : path(path), file_descriptor(inotify_init())
+        {}
 
         virtual ~File () {}
 
@@ -179,9 +167,9 @@ class File
 
         void wait ()
         {
-            const auto file_descriptor = inotify_init();
             const auto watch_descriptor = inotify_add_watch(file_descriptor, path.c_str(), IN_MODIFY);
             ::read(file_descriptor, 0, 0);
+            inotify_rm_watch(file_descriptor, watch_descriptor);
         }
 };
 

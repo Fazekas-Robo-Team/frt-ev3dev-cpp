@@ -2,7 +2,7 @@ BUILD_DIR := build
 SRC_DIR := src
 BIN_DIR := bin
 EXECUTABLE := main
-CXXFLAGS := -O3 --std=c++20 -Iinclude
+CXXFLAGS := -O3 --std=c++20 -Wall -Wextra -Wno-literal-suffix -Iinclude 
 
 include config.mk
 

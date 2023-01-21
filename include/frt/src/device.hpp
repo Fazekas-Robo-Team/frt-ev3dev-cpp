@@ -28,12 +28,12 @@ class Device
     protected:
         std::string prefix;
 
-        FRT::File attribute (const std::string &filename) {
-            return FRT::File(prefix + filename);
+        FRT::File attribute (const std::string_view filename) {
+            return FRT::File(prefix + (std::string)filename);
         }
 
     public:
-        Device (const std::string &dir, const std::string &address) noexcept
+        Device (const std::string &dir, const std::string_view address) noexcept
         {
             DIR *dfd;
             struct dirent *dp; // directory entry

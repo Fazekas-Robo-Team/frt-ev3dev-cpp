@@ -10,39 +10,39 @@ class TachoMotorInterface : public Device
     public:
         using Device::Device;
 
-        FRT::File address = attribute("address");
-        FRT::File command = attribute("command");
-        FRT::File commands = attribute("commands");
-        FRT::File count_per_rot = attribute("count_per_rot");
-        FRT::File count_per_m = attribute("count_per_m");
-        FRT::File full_travel_count = attribute("full_travel_count");
-        FRT::File driver_name = attribute("driver_name");
-        FRT::File duty_cycle = attribute("duty_cycle");
-        FRT::File duty_cycle_sp = attribute("duty_cycle_sp");
-        FRT::File polarity = attribute("polarity");
-        FRT::File position = attribute("position");
-        FRT::File hold_pid_kd = attribute("hold_pid/Kd");
-        FRT::File hold_pid_ki = attribute("hold_pid/Ki");
-        FRT::File hold_pid_kp = attribute("hold_pid/Kp");
-        FRT::File max_speed = attribute("max_speed");
-        FRT::File position_sp = attribute("position_sp");
-        FRT::File speed = attribute("speed");
-        FRT::File speed_sp = attribute("speed_sp");
-        FRT::File ramp_up_sp = attribute("ramp_up_sp");
-        FRT::File ramp_down_sp = attribute("ramp_down_sp");
-        FRT::File speed_pid_kd = attribute("speed_pid/Kd");
-        FRT::File speed_pid_ki = attribute("speed_pid/Ki");
-        FRT::File speed_pid_kp = attribute("speed_pid/Kp");
-        FRT::File state = attribute("state");
-        FRT::File stop_action = attribute("stop_action");
-        FRT::File stop_actions = attribute("stop_actions");
-        FRT::File time_sp = attribute("time_sp");
+        File address = attribute("address");
+        File command = attribute("command");
+        File commands = attribute("commands");
+        File count_per_rot = attribute("count_per_rot");
+        File count_per_m = attribute("count_per_m");
+        File full_travel_count = attribute("full_travel_count");
+        File driver_name = attribute("driver_name");
+        File duty_cycle = attribute("duty_cycle");
+        File duty_cycle_sp = attribute("duty_cycle_sp");
+        File polarity = attribute("polarity");
+        File position = attribute("position");
+        File hold_pid_kd = attribute("hold_pid/Kd");
+        File hold_pid_ki = attribute("hold_pid/Ki");
+        File hold_pid_kp = attribute("hold_pid/Kp");
+        File max_speed = attribute("max_speed");
+        File position_sp = attribute("position_sp");
+        File speed = attribute("speed");
+        File speed_sp = attribute("speed_sp");
+        File ramp_up_sp = attribute("ramp_up_sp");
+        File ramp_down_sp = attribute("ramp_down_sp");
+        File speed_pid_kd = attribute("speed_pid/Kd");
+        File speed_pid_ki = attribute("speed_pid/Ki");
+        File speed_pid_kp = attribute("speed_pid/Kp");
+        File state = attribute("state");
+        File stop_action = attribute("stop_action");
+        File stop_actions = attribute("stop_actions");
+        File time_sp = attribute("time_sp");
 };
 
 class TachoMotor
 {
     public:
-        struct modes {
+        struct commands {
             static constexpr std::string_view run_forever = "run-forever";
             static constexpr std::string_view run_to_absolute_position = "run-to-abs-pos";
             static constexpr std::string_view run_to_relative_position = "run-to-rel-pos";
@@ -87,28 +87,25 @@ class TachoMotor
         // constant attributes
         const _m diameter;
         const std::string port;
-        const FRT::Set<std::string> supported_modes;
+        const std::vector<std::string> supported_commands;
         const int pulses_per_rotation;
         const std::string driver_name;
         const int max_speed;
-        const FRT::Set<std::string> supported_stop_actions;
+        const std::vector<std::string> supported_stop_actions;
 
         template <typename Unit>
-        TachoMotor (const std::string &port, const Unit &diameter, const bool initialize = true) 
+        TachoMotor (const std::string_view port, const Unit &diameter, const bool reset = true) 
         :   attributes("tacho-motor/", port),
             diameter(length_cast<_m>(diameter)),
             port(attributes.address.read<std::string>()),
-            supported_modes(attributes.commands.read<FRT::Set<std::string>>()),
+            supported_commands(attributes.commands.read<std::vector<std::string>>()),
             pulses_per_rotation(attributes.count_per_rot.read<int>()),
             driver_name(attributes.driver_name.read<std::string>()),
             max_speed(attributes.max_speed.read<int>()),
-            supported_stop_actions(attributes.stop_actions.read<FRT::Set<std::string>>())
+            supported_stop_actions(attributes.stop_actions.read<std::vector<std::string>>())
         {
-            if (!initialize) return;
-
-            set_position(0);
-            set_polarity(TachoMotor::polarities::normal);
-            set_stop_action(TachoMotor::stop_actions::coast);
+            if (!reset) return;
+            TachoMotor::reset();
         }
 
         TachoMotor (const TachoMotor &) = delete;
@@ -128,12 +125,47 @@ class TachoMotor
         constexpr int units_to_pulses (const Unit &value)
         {
             const auto pulses = FRT::units_to_pulses(value, diameter, pulses_per_rotation);
-            return round(pulse / config.position_coefficient);
+            return round(pulses / config.position_coefficient);
         }
 
-        void set_mode (const std::string_view &value) 
+        void run_command (const std::string_view command) 
         {
-            attributes.command.write(value);
+            attributes.command.write(command);
+        }
+
+        void run_forever ()
+        {
+            run_command(TachoMotor::commands::run_forever);
+        }
+
+        void run_to_absolute_position ()
+        {
+            run_command(TachoMotor::commands::run_to_absolute_position);
+        }
+
+        void run_to_relative_position ()
+        {
+            run_command(TachoMotor::commands::run_to_relative_position);
+        }
+
+        void run_timed ()
+        {
+            run_command(TachoMotor::commands::run_timed);
+        }
+
+        void run_direct ()
+        {
+            run_command(TachoMotor::commands::run_direct);
+        }
+
+        void stop ()
+        {
+            run_command(TachoMotor::commands::stop);
+        }
+
+        void reset ()
+        {
+            run_command(TachoMotor::commands::reset);
         }
 
         std::string_view get_stop_action ()
@@ -141,7 +173,7 @@ class TachoMotor
             return stop_action;
         }
 
-        void set_stop_action (const std::string_view &value) 
+        void set_stop_action (const std::string_view value) 
         {
             if (value != stop_action) {
                 stop_action = value;
@@ -173,7 +205,7 @@ class TachoMotor
             return polarity;
         }
 
-        void set_polarity (const std::string_view &value) 
+        void set_polarity (const std::string_view value) 
         {
             if (value != polarity) {
                 polarity = value;
@@ -181,7 +213,7 @@ class TachoMotor
             }
         }
 
-        FRT::Vector<int> get_hold_pid ()
+        std::vector<int> get_hold_pid ()
         {
             const int kp = attributes.hold_pid_kp.read<int>();
             const int ki = attributes.hold_pid_ki.read<int>();
@@ -196,7 +228,7 @@ class TachoMotor
             attributes.hold_pid_kd.write(kd);
         }
 
-        FRT::Vector<int> get_speed_pid ()
+        std::vector<int> get_speed_pid ()
         {
             const int kp = attributes.speed_pid_kp.read<int>();
             const int ki = attributes.speed_pid_ki.read<int>();
@@ -211,7 +243,7 @@ class TachoMotor
             attributes.speed_pid_kd.write(kd);
         }
 
-        template <typename Unit>
+        template <typename Unit = _cm>
         Unit get_position_setpoint ()
         {
             return TachoMotor::pulses_to_units<Unit>(position_setpoint);
@@ -227,7 +259,7 @@ class TachoMotor
             }
         }
 
-        template <typename Unit>
+        template <typename Unit = _cm>
         Unit get_position ()
         {
             const auto pulses = attributes.position.read<int>();
@@ -241,14 +273,14 @@ class TachoMotor
             attributes.position.write(pulses);
         }
 
-        template <typename Unit>
+        template <typename Unit = _cm>
         Unit get_speed ()
         {
             const auto pulses = attributes.speed.read<int>();
             return TachoMotor::pulses_to_units<Unit>(pulses);
         }
 
-        template <typename Unit>
+        template <typename Unit = _cm>
         Unit get_speed_setpoint ()
         {
             return TachoMotor::pulses_to_units<Unit>(speed_setpoint);
@@ -265,7 +297,6 @@ class TachoMotor
             }
         }
 
-        /// @return Milliseconds.
         int get_ramp_up_setpoint ()
         {
             return ramp_up_setpoint;
@@ -279,7 +310,6 @@ class TachoMotor
             }
         }
 
-        /// @return Milliseconds.
         int get_ramp_down_setpoint ()
         {
             return ramp_down_setpoint;
@@ -293,34 +323,68 @@ class TachoMotor
             }
         }
 
-        Set<std::string> get_state ()
+        std::vector<std::string> get_state ()
         {
-            return attributes.state.read<Set<std::string>>();
+            return attributes.state.read<std::vector<std::string>>();
         }
 
-        void wait_until (const std::string_view &state)
+        bool is_running ()
         {
-            while (!get_state().count((std::string)state)) {
+            const auto state = get_state();
+            return std::count(state.begin(), state.end(), TachoMotor::states::running);
+        }
+
+        bool is_ramping ()
+        {
+            const auto state = get_state();
+            return std::count(state.begin(), state.end(), TachoMotor::states::ramping);
+        }
+
+        bool is_holding ()
+        {
+            const auto state = get_state();
+            return std::count(state.begin(), state.end(), TachoMotor::states::holding);
+        }
+
+        bool is_overloaded ()
+        {
+            const auto state = get_state();
+            return std::count(state.begin(), state.end(), TachoMotor::states::overloaded);
+        }
+
+        bool is_stalled ()
+        {
+            const auto state = get_state();
+            return std::count(state.begin(), state.end(), TachoMotor::states::stalled);
+        }
+
+        void wait_until (const std::string_view flag)
+        {
+            while (true) {
+                const auto state = get_state();
+                if (std::count(state.begin(), state.end(), flag)) {
+                    break;
+                }
                 attributes.state.wait();
             }
         }
 
-        void wait_while (const std::string_view &state)
+        void wait_while (const std::string_view flag)
         {
-            while (get_state().count((std::string)state)) {
+            while (true) {
+                const auto state = get_state();
+                if (!std::count(state.begin(), state.end(), flag)) {
+                    break;
+                }
                 attributes.state.wait();
             }
         }
 
-        /// @brief Rotate the motor forever.
-        /// @param velocity Distance or rotation per second.
-        /// @param brake Defaults to true.
-        /// @param block Defaults to true.
         template <typename Unit, bool block = false>
         void on (const Unit &velocity)
         {
             set_speed_setpoint(velocity);
-            set_mode(TachoMotor::modes::run_forever);
+            run_command(TachoMotor::commands::run_forever);
             if constexpr (block) {
                 wait_while(TachoMotor::states::running);
             }
@@ -339,7 +403,7 @@ class TachoMotor
                 set_stop_action(TachoMotor::stop_actions::coast);
             }
 
-            set_mode(TachoMotor::modes::run_to_relative_position);
+            run_command(TachoMotor::commands::run_to_relative_position);
             if constexpr (block) {
                 wait_while(TachoMotor::states::running);
             }
@@ -358,7 +422,7 @@ class TachoMotor
                 set_stop_action(TachoMotor::stop_actions::coast);
             }
 
-            set_mode(TachoMotor::modes::run_to_absolute_position);
+            run_command(TachoMotor::commands::run_to_absolute_position);
             if constexpr (block) {
                 wait_while(TachoMotor::states::running);
             }
