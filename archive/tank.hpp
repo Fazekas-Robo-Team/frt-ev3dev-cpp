@@ -31,8 +31,8 @@ class Tank
             left_motor.on_to_position<block, brake>(position, right_velocity);
         }
 
-        Tank (TachoMotor &left_motor, TachoMotor &right_motor)
-        :   left_motor(left_motor), right_motor(right_motor) 
+        Tank (TachoMotor &left, TachoMotor &right)
+        :   left(left), right(right) 
         {
             std::ios_base::sync_with_stdio(false);
         }
@@ -40,8 +40,6 @@ class Tank
         Tank (const Tank &) = delete;
 
         virtual ~Tank () {}
-
-        //virtual void run () = 0;
 };
 
 }; // namespace

@@ -128,7 +128,7 @@ class TachoMotor
         constexpr int units_to_pulses (const Unit &value)
         {
             const auto pulses = FRT::units_to_pulses(value, diameter, pulses_per_rotation);
-            return round(value / config.position_coefficient);
+            return round(pulse / config.position_coefficient);
         }
 
         void set_mode (const std::string_view &value) 

@@ -166,14 +166,17 @@ template <> std::string UnitBase<_deg>::postfix("deg");
 template <> std::string UnitBase<_rad>::postfix("rad");
 template <> std::string UnitBase<_grad>::postfix("grad");
 
-_mm operator""mm (const long double value) { return _mm(value); }
-_cm operator""cm (const long double value) { return _cm(value); }
-_dm operator""dm (const long double value) { return _dm(value); }
-_m operator""m (const long double value) { return _m(value); }
+namespace unit_literals 
+{
+    _mm operator""mm (const long double value) { return _mm(value); }
+    _cm operator""cm (const long double value) { return _cm(value); }
+    _dm operator""dm (const long double value) { return _dm(value); }
+    _m operator""m (const long double value) { return _m(value); }
 
-_deg operator""deg (const long double value) { return _deg(value); }
-_rad operator""rad (const long double value) { return _rad(value); }
-_grad operator""grad (const long double value) { return _grad(value); }
+    _deg operator""deg (const long double value) { return _deg(value); }
+    _rad operator""rad (const long double value) { return _rad(value); }
+    _grad operator""grad (const long double value) { return _grad(value); }
+};
 
 template <typename To, typename From>
 constexpr inline To angle_cast (const From &angle) 

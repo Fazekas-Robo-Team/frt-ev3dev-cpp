@@ -1,21 +1,15 @@
-#include "logger.hpp"
-#include "utility.hpp"
-#include "motor.hpp"
-#include "sensor.hpp"
-#include "tank.hpp"
-#include "scheduler.hpp"
+#include <frt/frt.hpp>
 
-using namespace FRT;
+// enables the use of unit suffixes, for example "6.0cm"
+using namespace FRT::unit_literals;
+
+FRT::TachoMotor left(OUTPUT_A, 6.0cm), right(OUTPUT_B, 6.0cm);
 
 int main () 
 {
-    auto left = TachoMotor(OUTPUT_A, 6.2mm);
-    auto right = TachoMotor(OUTPUT_B, 6.2mm);
-    auto tank = Tank(left, right);
+    // speeds up input-output a bit
+    std::ios_base::sync_with_stdio(false);
 
-    tank.left.set_polarity(TachoMotor::polarities::inversed);
-    tank.left.config.position_coefficient = 1.0075;
-
-    tank.on_for_segment(150.0cm, 1020.0deg, 1020.0deg);
+    // write driver code here
+    FRT::Logger::info("Hello World!");
 }
-
