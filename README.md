@@ -1,13 +1,20 @@
 # Fazekas RoboTeam - ev3dev C++ library
 
-Language bindings inspired from https://github.com/ddemidov/ev3dev-lang-cpp with some added higher level functionality. It is under development, meaning it might not be complete.
+Language bindings inspired by [ddemidov/ev3dev-lang-cpp](https://github.com/ddemidov/ev3dev-lang-cpp) with some added higher level functionality. It is under development, meaning it might not be complete.
 
 - [Getting started](#getting-started)
     - [Compilation](#compilation)
     - [VS Code recommended settings](#vs-code-recommended-settings)
     - [Code structure](#basic-example)
 - [Examples](#examples)
+    - [Unregulated tank movement](#unregulated-tank-movement)
 - [Features](#features)
+    - [FRT::Logger](#frtlogger)
+    - [FRT::TachoMotor](#frttachomotor)
+    - [FRT::Sensor](#frtsensor)
+    - [FRT::ColorSensor](#frtcolorsensor)
+    - [Unit system](#unit-system)
+    - [Other utilities](#other-utilities)
 
 
 # Getting started
@@ -144,4 +151,70 @@ int main ()
 }
 ```
 
-# Features
+# Reference
+
+> Visit [Linux Kernel Drivers for ev3dev-stretch](https://docs.ev3dev.org/projects/lego-linux-drivers/en/ev3dev-stretch/) for more information about the behaviour of the underlying driver.
+
+## FRT::Logger
+
+Functions which make logging to the standard output easier and more akin to Python's `print()`.  Provides the log messages with timestamps, severity levels and coloring. Supports our unit system, `std::pair` and the iterable standard library containers as well.
+
+The `FRT::log_level` variable defined in file `frt/src/config.hpp` can be configured to display messages only with a severity above a certain level. The others are discarded at compile-time, therefore they do not effect the performance at all.
+
+Example code:
+
+```
+#include <frt/frt.hpp>
+
+using namespace FRT;
+using namespace FRT::unit_literals;
+
+int main ()
+{
+    Logger::debug("Hello World!");
+
+    std::vector<int> vector = { 20, 30, 40 };
+    Logger::info(10, vector);
+
+    Logger::warning(50.0cm, 3.14159rad);
+}
+```
+
+Example output:
+
+```
+[19:37:11.032 DEBUG]   Hello World!
+[19:37:11.032 INFO]    10 { 20, 30, 40 }
+[19:37:11.032 WARNING] 50 cm 3.14159 rad
+```
+
+### void FRT::Logger::debug (Args... args)
+
+### void FRT::Logger::info (Args... args)
+
+### void FRT::Logger::warning (Args... args)
+
+### void FRT::Logger::error (Args... args)
+
+---
+
+## FRT::TachoMotor
+
+---
+
+## FRT::Sensor
+
+---
+
+## FRT::ColorSensor
+
+
+---
+
+## Unit system
+
+---
+
+## Other utilities
+
+

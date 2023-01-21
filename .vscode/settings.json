@@ -113,7 +113,9 @@
         "syncstream": "cpp",
         "netfwd": "cpp",
         "filesystem": "cpp",
-        "*.def": "cpp"
+        "*.def": "cpp",
+        "hash_map": "cpp",
+        "strstream": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
 }
