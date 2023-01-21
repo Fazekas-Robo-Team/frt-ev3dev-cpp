@@ -33,7 +33,7 @@ It looks like this on my device:
 CXX := toolchain/arm-unknown-linux-gnueabi/bin/arm-unknown-linux-gnueabi-c++
 ```
 
-There will be a compiler for x86-64 Linux systems in the `toolchain` directory soon. If you cannot find a compiler for your host working with `ev3dev`, we recommend trying out [crosstool-NG](https://crosstool-ng.github.io/).
+There will be a compiler for x86-64 Linux hosts in the `toolchain` directory soon. If you cannot find a compiler for your host working with `ev3dev`, we recommend trying out [crosstool-NG](https://crosstool-ng.github.io/).
 
 You should be able now to build the project by running:
 ```
@@ -108,7 +108,7 @@ using namespace FRT;
 using namespace FRT::unit_literals;
 
 // diameter is written onto the side of the wheels
-TachoMotor left(OUTPUT_A, 6.2mm), right(OUTPUT_B, 6.2mm);
+TachoMotor left(OUTPUT_A, 6.2cm), right(OUTPUT_B, 6.2cm);
 
 // measure it roughly with tape, then refine during testing
 const auto axle_length = 14.9cm; 
@@ -201,19 +201,20 @@ Output:
 
 ## FRT::TachoMotor (const std::string_view port, const Unit &diameter, const bool reset = true)
 
-Constructs a TachoMotor object.
+Constructs an `FRT::TachoMotor` object.
 
 - Parameters:
     - `port`: constants `OUTPUT_A`, `OUTPUT_B`, `OUTPUT_C`, `OUTPUT_D`
-    - `diameter`: diameter of wheel (e.g. `6.2mm`), usually can be found on the side of the wheel
+    - `diameter`: diameter of wheel (e.g. `6.2cm`), usually can be found on the side of the wheel
     - `reset` (optional): if explicitly set to `false`, it will not reset the internal variables of the motor to their default values
 
 Tips before using a motor:
 
-1. Find out the its maximum angular velocity, and then adjust its speed accordingly. See `TachoMotor::max_speed`.
-2. When using two EV3 medium motors in a tank, by default the wheels are moving into the opposite direction when a speed of the same sign is applied. This can be solved by inverting the left one's polarity. See `TachoMotor::set_polarity`.
-3. Most of the times the weight distribution of a robot is imbalanced. That means, its movement could pull to some direction when the same speed is applied to both wheels, which needs fixing. See `TachoMotor::config::position_coefficient`.
+1. Find out the its maximum angular velocity, and then adjust its speed accordingly. See `FRT::TachoMotor::max_speed`.
+2. When using two EV3 medium motors in a tank, the wheels are moving in the opposite direction by default when a speed of the same sign is applied. This can be solved by inverting the left one's polarity. See `FRT::TachoMotor::set_polarity`.
+3. Most of the times the weight distribution of a robot is imbalanced. That means, its movement could pull to some direction when the same speed is applied to both wheels, which needs fixing. See `FRT::TachoMotor::config::position_coefficient`.
 
+---
 
 ### void FRT::TachoMotor::on \<bool block = false> (const Unit &velocity)
 
@@ -232,7 +233,7 @@ Example #1:
 using namespace FRT;
 using namespace FRT::unit_literals;
 
-TachoMotor left(OUTPUT_A, 6.2mm), right(OUTPUT_B, 6.2mm);
+TachoMotor left(OUTPUT_A, 6.2cm), right(OUTPUT_B, 6.2cm);
 
 int main () 
 {
@@ -251,7 +252,7 @@ Example #2:
 using namespace FRT;
 using namespace FRT::unit_literals;
 
-TachoMotor left(OUTPUT_A, 6.2mm), right(OUTPUT_B, 6.2mm);
+TachoMotor left(OUTPUT_A, 6.2cm), right(OUTPUT_B, 6.2cm);
 
 int main () 
 {
@@ -293,7 +294,7 @@ Rotates the motor at the rate of `velocity` to `position`.
 ### void FRT::TachoMotor::wait_until (const std::string_view flag)
 
 - Parameters:
-    - `flag`: state constant in `TachoMotor::states`
+    - `flag`: state constant in `FRT::TachoMotor::states`
 
 Blocks the thread until the state flag appears in the `FRT::TachoMotor::get_state()` set.
 
@@ -305,7 +306,7 @@ using namespace FRT::unit_literals;
 
 int main () 
 {
-    TachoMotor left(OUTPUT_A, 6.2mm), right(OUTPUT_A, 6.2mm);
+    TachoMotor left(OUTPUT_A, 6.2cm), right(OUTPUT_A, 6.2cm);
 
     left.on(30.0cm);
     right.on(30.0cm);
@@ -321,7 +322,7 @@ int main ()
 ### void FRT::TachoMotor::wait_while (const std::string_view flag)
 
 - Parameters:
-    - `flag`: state constant in `TachoMotor::states`
+    - `flag`: state constant in `FRT::TachoMotor::states`
 
 Blocks the thread while the state flag is in the `FRT::TachoMotor::get_state()` set.
 
@@ -335,7 +336,7 @@ using namespace FRT::unit_literals;
 
 int main () 
 {
-    TachoMotor motor(OUTPUT_A, 6.2mm);
+    TachoMotor motor(OUTPUT_A, 6.2cm);
 
     // non-blocking call + wait
     motor.on_for_segment<false>(50.0cm, 500.0deg);
@@ -368,7 +369,7 @@ int main ()
 
 - Returns: `true` if the motor is holding itself to a fixed position
 
-Holding happens after the robot has stopped when the its stop action is set to `TachoMotor::stop_actions::hold`.
+Holding happens after the robot has stopped when the its stop action is set to `FRT::TachoMotor::stop_actions::hold`.
 
 ---
 
@@ -400,7 +401,7 @@ using namespace FRT::unit_literals;
 
 int main () 
 {
-    TachoMotor left(OUTPUT_A, 6.2mm), right(OUTPUT_A, 6.2mm);
+    TachoMotor left(OUTPUT_A, 6.2cm), right(OUTPUT_A, 6.2cm);
 
     left.on(30.0cm);
     right.on(30.0cm);
@@ -428,7 +429,7 @@ int main ()
 ### void FRT::TachoMotor::set_polarity (const std::string_view value)
 
 - Parameters:
-    - `value`: constant in `TachoMotor::polarities`
+    - `value`: constant in `FRT::TachoMotor::polarities`
 
 Sets the motors polarity to `value`, which is the direction it will rotate in.
 
@@ -439,7 +440,7 @@ Sets the motors polarity to `value`, which is the direction it will rotate in.
 ### void FRT::TachoMotor::set_stop_action (const std::string_view value)
 
 - Parameters:
-    - `value`: constant in `TachoMotor::stop_actions`
+    - `value`: constant in `FRT::TachoMotor::stop_actions`
 
 Sets the behaviour of the motor when it stops running to `value`.
 
@@ -447,7 +448,7 @@ Sets the behaviour of the motor when it stops running to `value`.
 
 ### void FRT::TachoMotor::stop ()
 
-Runs the command `TachoMotor::commands::stop`, which stops the command currently running. The motor then behaves according to its set stop-action.
+Runs the command `FRT::TachoMotor::commands::stop`, which stops the command currently running. The motor then behaves according to its set stop-action.
 
 ---
 
