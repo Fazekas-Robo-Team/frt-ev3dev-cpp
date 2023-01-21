@@ -384,7 +384,7 @@ Holding happens after the robot has stopped when the its stop action is set to `
 
 ---
 
-### Unit FRT::TachoMotor::get_position <typename Unit = _cm> ()
+### Unit FRT::TachoMotor::get_position \<typename Unit = _cm> ()
 
 - Template parameters:
     - `Unit` (optional): unit of measurement, centimeters by default
@@ -417,7 +417,7 @@ int main ()
 
 ---
 
-### Unit FRT::TachoMotor::get_speed <typename Unit = _cm> ()
+### Unit FRT::TachoMotor::get_speed \<typename Unit = _cm> ()
 
 - Template parameters:
     - `Unit` (optional): unit of measurement, centimeters by default
