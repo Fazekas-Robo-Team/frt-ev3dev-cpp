@@ -1,13 +1,12 @@
 #include <frt/frt.hpp>
 
+using namespace FRT;
 using namespace FRT::unit_literals;
 
-// write your own functions here
+TachoMotor left(OUTPUT_A, 6.2mm), right(OUTPUT_B, 6.2mm);
 
 int main () 
 {
-    std::ios_base::sync_with_stdio(false);
-
-    // write driver code here
-    FRT::Logger::info("Hello World!");
+    left.on(500.0deg);
+    right.on<true>(500.0deg);
 }

@@ -13,7 +13,7 @@ namespace FRT
 const long double pi = acos(-1);
 
 template <typename T>
-inline int clamp (const T &value, const T &min, const T &max)
+inline auto clamp (const T &value, const T &min, const T &max)
 {
     return std::min(std::max(value, min), max);
 }
@@ -21,9 +21,9 @@ inline int clamp (const T &value, const T &min, const T &max)
 /// @brief Shorthand for std::this_thread::sleep_for.
 /// @param value Duration. Accepts std::chrono_literals literals, such as sleep(500ms).
 template <typename T>
-inline void sleep (const T &value)
+inline void sleep (const T &duration)
 {
-    std::this_thread::sleep_for(value);
+    std::this_thread::sleep_for(duration);
 }
 
 /// @returns Timestamp in seconds with the resolution of microseconds.

@@ -380,7 +380,7 @@ class TachoMotor
             }
         }
 
-        template <typename Unit, bool block = false>
+        template <bool block = false, typename Unit>
         void on (const Unit &velocity)
         {
             set_speed_setpoint(velocity);
@@ -409,7 +409,7 @@ class TachoMotor
             }
         }
 
-        template <typename DistanceUnit, typename VelocityUnit, bool block = true, bool brake = true>
+        template <bool block = true, bool brake = true, typename DistanceUnit, typename VelocityUnit>
         void on_to_position (const DistanceUnit &position, const VelocityUnit &velocity)
         {
             set_position_setpoint(position);

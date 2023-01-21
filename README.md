@@ -8,7 +8,7 @@ Language bindings inspired by [ddemidov/ev3dev-lang-cpp](https://github.com/ddem
     - [Code structure](#basic-example)
 - [Examples](#examples)
     - [Unregulated tank movement](#unregulated-tank-movement)
-- [Features](#features)
+- [API overview](#api-overview)
     - [FRT::Logger](#frtlogger)
     - [FRT::TachoMotor](#frttachomotor)
     - [FRT::Sensor](#frtsensor)
@@ -151,7 +151,7 @@ int main ()
 }
 ```
 
-# Reference
+# API overview
 
 > Visit [Linux Kernel Drivers for ev3dev-stretch](https://docs.ev3dev.org/projects/lego-linux-drivers/en/ev3dev-stretch/) for more information about the behaviour of the underlying driver.
 
@@ -180,7 +180,7 @@ int main ()
 }
 ```
 
-Example output:
+Output:
 
 ```
 [19:37:11.032 DEBUG]   Hello World!
@@ -198,7 +198,57 @@ Example output:
 
 ---
 
-## FRT::TachoMotor
+## FRT::TachoMotor (const std::string_view port, const Unit &diameter, const bool reset = true)
+
+- Parameters:
+    - `port`: constants `OUTPUT_A`, `OUTPUT_B`, `OUTPUT_C`, `OUTPUT_D`
+    - `diameter`: diameter of wheel (e.g. `6.2mm`), usually can be found on the side of the wheel
+    - `reset` (optional): if explicitly set to `false`, it will not reset the internal variables of the motor to their default values
+
+### FRT::TachoMotor::on \<bool block = false> (const Unit &velocity)
+
+- Template parameters:
+    - `block` (optional): if `true`, the program will not continue while the motor is still running
+- Parameters:
+    - `velocity`: distance on the arc of the wheel, or angle, per second
+
+Example #1:
+
+```
+#include <frt/frt.hpp>
+
+using namespace FRT;
+using namespace FRT::unit_literals;
+
+TachoMotor left(OUTPUT_A, 6.2mm), right(OUTPUT_B, 6.2mm);
+
+int main () 
+{
+    left.on<true>(500.0deg);
+    right.on<true>(500.0deg);
+}
+```
+
+> Oh no! This way the right motor will not get turned on, because the first call blocks the thread.
+
+Example #2:
+
+```
+#include <frt/frt.hpp>
+
+using namespace FRT;
+using namespace FRT::unit_literals;
+
+TachoMotor left(OUTPUT_A, 6.2mm), right(OUTPUT_B, 6.2mm);
+
+int main () 
+{
+    left.on(500.0deg);
+    right.on<true>(500.0deg);
+}
+```
+
+> Setting the first call to non-blocking, the robot should now be moving forward until stopped.
 
 ---
 
@@ -217,4 +267,51 @@ Example output:
 
 ## Other utilities
 
+### double FRT::time ()
 
+- Returns: current timestamp in seconds, with the resolution of microseconds
+
+The built-in `std::chrono` library can be percieved as far too complex, especially as a beginner. The `FRT::time()` function is a simpler interface, similar to Python's `time.time()`, and is sufficient for use cases like measuring the elapsed time between two events during debugging.
+
+---
+
+### void FRT::sleep (const T &duration)
+
+- Parameters:
+    - `duration`: duration to sleep
+
+Shorthand for `std::this_thread::sleep_for()`. Accepts the units of measurement of `std::chrono_literals`. Similar to Python's `time.sleep()`.
+
+Example code:
+
+```
+#include <frt/frt.hpp>
+
+using namespace FRT;
+using namespace FRT::unit_literals;
+
+int main () 
+{
+    const auto start = time();
+    sleep(500ms);
+    const auto end = time();
+    
+    Logger::info("Seconds elapsed:", end - start);
+}
+```
+
+Output:
+
+```
+[20:04:50.807 INFO]    Seconds elapsed: 0.50011
+```
+
+---
+
+### auto FRT::clamp (const T &value, const T &min, const T &max)
+
+- Returns: `value`, if `value` is between `min` and `max`, `min`, if it is smaller than `min`, `max` if it is bigger than `max˙
+
+Shorthand for `std::min(std::max(value, min), max)`. When running controlled movement, it can be used to restrict the motor's angular velocity into the supported range and avoid misbehaviour and errors.
+
+---
