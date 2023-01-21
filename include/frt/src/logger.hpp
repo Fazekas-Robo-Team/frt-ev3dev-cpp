@@ -7,7 +7,6 @@
 #include <ctime>
 #include <sstream>
 #include <chrono>
-#include <mutex>
 
 namespace FRT
 {
@@ -20,15 +19,11 @@ std::ostream &operator<< (std::ostream &os, const std::pair<A, B> &p)
 
 class Logger 
 {
-    private:
-        static std::mutex mutex;
-
     public:
         template <typename... Args>
         static inline void error (Args... args) 
         {
             if constexpr (log_level >= log_levels::error) {
-                const auto lock = std::scoped_lock(mutex);
                 std::cout << "\u001b[31;1m[";
                 print_time();
                 std::cout << " ERROR]  ";
@@ -40,7 +35,6 @@ class Logger
         static inline void warning (Args... args) 
         {
             if constexpr (log_level >= log_levels::warning) {
-                const auto lock = std::scoped_lock(mutex);
                 std::cout << "\u001b[33;1m[";
                 print_time();
                 std::cout << " WARNING]";
@@ -52,7 +46,6 @@ class Logger
         static inline void info (Args... args) 
         {
             if constexpr (log_level >= log_levels::info) {
-                const auto lock = std::scoped_lock(mutex);
                 std::cout << "\u001b[0m[";
                 print_time();
                 std::cout << " INFO]   ";
@@ -64,7 +57,6 @@ class Logger
         static inline void debug (Args... args) 
         {
             if constexpr (log_level >= log_levels::debug) {
-                const auto lock = std::scoped_lock(mutex);
                 std::cout << "\u001b[0m[";
                 print_time();
                 std::cout << " DEBUG]  ";
@@ -98,7 +90,5 @@ class Logger
             std::cout << std::endl;
         }
 };
-
-std::mutex Logger::mutex = std::mutex();
 
 } // namespace

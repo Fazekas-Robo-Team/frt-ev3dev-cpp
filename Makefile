@@ -10,7 +10,7 @@ SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
 
 OBJS := $(addsuffix .o,$(addprefix $(BUILD_DIR)/, $(notdir $(SRCS))))
 
-$(BIN_DIR)/$(EXECUTABLE): clean $(OBJS)
+$(BIN_DIR)/$(EXECUTABLE): $(OBJS)
 	mkdir -p $(BIN_DIR)
 	$(CXX) -o $@ $^ 
 

@@ -2,11 +2,11 @@
 
 #include "config.hpp"
 #include "logger.hpp"
-#include "container.hpp"
 
 #include <fstream>
 #include <mutex>
 #include <sstream>
+#include <vector>
 
 #include <errno.h>
 
@@ -71,17 +71,17 @@ class File
         /// @brief Template specialization workaround for reading sets. Used by File::read.
         /// @param attempts Passed to File::read_line.
         /// @return 
-        Set<std::string> read_set (int attempts = 2)
+        std::vector<std::string> read_set (int attempts = 2)
         {
             const auto line = read_line(attempts);
 
-            std::pmr::set<std::string> result;
+            std::vector<std::string> result;
             std::string buffer;
             
             for (const char current_char : line) {
                 if (current_char == ' ') {
                     if (!buffer.empty()) {
-                        result.insert(buffer);
+                        result.emplace_back(std::move(buffer));
                         buffer.clear();
                     }
                     continue;
@@ -90,10 +90,10 @@ class File
             }
             
             if (!buffer.empty()) {
-                result.insert(buffer);
+                result.emplace_back(std::move(buffer));
             }
 
-            return { std::move(result) };
+            return result;
         }
 
     public:
@@ -102,13 +102,13 @@ class File
         virtual ~File () {}
 
         /// @brief Reads data from the beginning of the file. Reading strings stops at any whitespace, see File::read_line if needed.
-        /// @tparam T Type of data to read. Arithmetic types, std::string and FRT::Set are typical.
+        /// @tparam T Type of data to read. Arithmetic types, std::string and std::vector<std::string> are typical.
         /// @tparam silent Option to suppress error messages. Useful when probing for devices. Defaults to false.
         /// @param attempts Determines how many times to retry in case of failure. Defaults to two.
         template <typename T, bool silent = false>
         T read (int attempts = 2)
         {
-            if constexpr (std::is_same_v<T, Set<std::string>>) {
+            if constexpr (std::is_same_v<T, std::vector<std::string>>) {
                 return read_set(attempts);
             } else {
                 if (attempts == 0) {
