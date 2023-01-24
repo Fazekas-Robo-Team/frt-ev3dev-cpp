@@ -2,7 +2,7 @@
 
 Language bindings inspired by [ddemidov/ev3dev-lang-cpp](https://github.com/ddemidov/ev3dev-lang-cpp) with some added higher level functionality. It is under development, meaning it might not be complete.
 
-First and foremost, this library serves educational purposes, and this guide is aimed to help beginners, therefore its wording tries to be casual, and it contains fully working programs in every example, which can be tried out and experimented with. Using C++ is much more complex than using Python, however it should not be forgotten, that the former runs roughly 20 times faster on an EV3 brick than MicroPython. The setting up may require assistance though.
+First and foremost, this library serves educational purposes, and this guide is aimed to help beginners. Therefore, its wording tries to be casual, and it contains fully working programs in every example, which can be tried out and experimented with. Using C++ is much more complex than using Python, however it should not be forgotten, that the former runs roughly 20 times faster on an EV3 brick than MicroPython. The setting up may require assistance though.
 
 - [Getting started](#getting-started)
     - [Compilation](#compilation)
@@ -33,7 +33,7 @@ It looks like this on my device:
 CXX := toolchain/arm-unknown-linux-gnueabi/bin/arm-unknown-linux-gnueabi-c++
 ```
 
-There will be a compiler for x86-64 Linux hosts in the `toolchain` directory soon. If you cannot find a compiler for your host working with `ev3dev`, we recommend trying out [crosstool-NG](https://crosstool-ng.github.io/).
+There will be a compiler for x86-64 Linux hosts available in the `toolchain` directory soon. If you cannot find a compiler for your host working with `ev3dev`, we recommend trying out [crosstool-NG](https://crosstool-ng.github.io/).
 
 You should be able now to build the project by running:
 ```
@@ -50,10 +50,10 @@ make clean
 Install the `ev3dev.ev3dev-browser` extension.
 After connecting to the brick, you can copy the built project onto the EV3 and run it by pressing F5.
 
-It copies the whole workspace by default, however only `bin` directory is strictly neccessary. 
+It copies the whole workspace by default, however only the `bin` directory is strictly neccessary. 
 This can be solved by setting the `ev3devBrowser.download.include` option in the VSCode settings to `bin/**`.
 
-If you have the extension `ms-vscode.cpptools` installed which gives you IntelliSense, set the option `C_Cpp.default.cppStandard` to `c++20` as well.
+If you have the extension `ms-vscode.cpptools` installed which gives you C++ IntelliSense, set the option `C_Cpp.default.cppStandard` to `c++20` as well.
 
 ## Code structure
 
@@ -83,7 +83,7 @@ In order to use all features of the library, include the `frt/frt.hpp` convenien
 
 The library code is enclosed in the namespace `FRT`. That means, most of the names have to be preceded by `FRT::` (e.g. `FRT::Logger`, `FRT::ColorSensor`) in the same way the standard library names are preceded by `std::` (e.g. `std::string`, `std::vector`). That way you know where each name is coming from.
 
-Our distance and angle units are in the namespace `FRT::unit_literals`. The statement below enables their direct use (e.g. `6.2cm`, `120.0deg`).
+Our distance and angle units are in the namespace `FRT::unit_literals`. The statement below enables their direct use in code (e.g. `6.2cm`, `120.0deg`).
 
 ```
 using namespace FRT::unit_literals;
@@ -91,7 +91,7 @@ using namespace FRT::unit_literals;
 
 The `main` function is the entry point of our program. Code written there will get executed automatically. 
 
-The statement below speeds up input-output a little, therefore it is recommended to be used.
+The statement below speeds up input-output a little, therefore it is recommended to be used, but can be omitted.
 
 ```
 std::ios_base::sync_with_stdio(false);
@@ -455,6 +455,14 @@ Runs the command `FRT::TachoMotor::commands::stop`, which stops the command curr
 ### void FRT::TachoMotor::reset ()
 
 Stops the motor and resets all its inner variables.
+
+---
+
+### (property) double FRT::TachoMotor::config::position_coefficient
+
+- initial value: `1.0`
+
+The motor's speed and position is scaled proportionally to this coefficient.
 
 ---
 
