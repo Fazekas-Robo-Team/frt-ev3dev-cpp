@@ -231,7 +231,7 @@ constexpr inline To length_cast (const Angle &angle, const From &diameter)
 {
     const _rad radians = angle_cast<_rad>(angle);
     const _m diameter_meters = length_cast<_m>(diameter);
-    const _m arc = radians.value * diameter_meters.value;
+    const _m arc = radians.value * diameter_meters.value / 2;
     return length_cast<To>(arc);
 }
 
@@ -240,7 +240,7 @@ constexpr inline To angle_cast (const From &arc_length, const Diameter &diameter
 {
     const _m arc_meters = length_cast<_m>(arc_length);
     const _m diameter_meters = length_cast<_m>(diameter);
-    const _rad radians = arc_meters.value / diameter_meters.value;
+    const _rad radians = 2 * arc_meters.value / diameter_meters.value;
     return angle_cast<To>(radians);
 }
 
