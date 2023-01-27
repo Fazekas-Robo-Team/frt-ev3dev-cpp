@@ -33,7 +33,7 @@ It looks like this on my device:
 CXX := toolchain/arm-unknown-linux-gnueabi/bin/arm-unknown-linux-gnueabi-c++
 ```
 
-There will be a compiler for x86-64 Linux hosts available in the `toolchain` directory soon. If you cannot find a compiler for your host working with `ev3dev`, we recommend trying out [crosstool-NG](https://crosstool-ng.github.io/).
+There will be a `gcc` toolchain for x86-64 Linux hosts available in a separate repository soon. If you cannot find a toolchain for your host working with `ev3dev`, we recommend trying out [crosstool-NG](https://crosstool-ng.github.io/).
 
 You should be able now to build the project by running:
 ```
