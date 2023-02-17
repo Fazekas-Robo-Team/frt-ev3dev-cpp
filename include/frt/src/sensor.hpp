@@ -26,14 +26,14 @@ class SensorInterface : public Device
         FRT::File units = attribute("units");
         FRT::File text_value = attribute("text_value");
         FRT::File value[8] = {
-            { "value0" }, 
-            { "value1" }, 
-            { "value2" }, 
-            { "value3" }, 
-            { "value4" },
-            { "value5" },
-            { "value6" },
-            { "value7" },
+            attribute("value0"), 
+            attribute("value1"), 
+            attribute("value2"), 
+            attribute("value3"), 
+            attribute("value4"),
+            attribute("value5"),
+            attribute("value6"),
+            attribute("value7"),
         };
 };
 
