@@ -42,7 +42,8 @@ class TachoMotorInterface : public Device
 class TachoMotor
 {
     public:
-        struct commands {
+        struct commands 
+        {
             static constexpr std::string_view run_forever = "run-forever";
             static constexpr std::string_view run_to_absolute_position = "run-to-abs-pos";
             static constexpr std::string_view run_to_relative_position = "run-to-rel-pos";
@@ -52,12 +53,14 @@ class TachoMotor
             static constexpr std::string_view reset = "reset";
         };
 
-        struct polarities {
+        struct polarities 
+        {
             static constexpr std::string_view normal = "normal";
             static constexpr std::string_view inversed = "inversed";
         };
 
-        struct states {
+        struct states 
+        {
             static constexpr std::string_view running = "running";
             static constexpr std::string_view ramping = "ramping";
             static constexpr std::string_view holding = "holding";
@@ -65,15 +68,14 @@ class TachoMotor
             static constexpr std::string_view stalled = "stalled";
         };
 
-        struct stop_actions {
+        struct stop_actions 
+        {
             static constexpr std::string_view coast = "coast";
             static constexpr std::string_view brake = "brake";
             static constexpr std::string_view hold = "hold";
         };
 
     private:
-        TachoMotorInterface attributes;
-
         // user-set attributes
         int ramp_up_setpoint = -1;
         int ramp_down_setpoint = -1;
@@ -84,6 +86,8 @@ class TachoMotor
         std::string_view stop_action = "";
 
     public:
+        TachoMotorInterface attributes;
+
         // constant attributes
         const _m diameter;
         const std::string port;
@@ -108,9 +112,8 @@ class TachoMotor
             TachoMotor::reset();
         }
 
-        TachoMotor (const TachoMotor &) = delete;
-
-        struct {
+        struct 
+        {
             double position_coefficient = 1;
         } config;
 

@@ -59,6 +59,7 @@ class Device
             FRT::Logger::error("Device::connect - failed, address:", address);
         }
 
+        Device (const Device &) = delete;
         virtual ~Device () {};
 };
 
