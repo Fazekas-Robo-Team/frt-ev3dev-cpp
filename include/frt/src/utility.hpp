@@ -108,6 +108,11 @@ class LengthUnit : public UnitBase<T>
         { 
             return lhs.value == length_cast<T>(rhs).value; 
         }
+
+        constexpr T operator- () const
+        {
+            return T(-UnitBase<T>::value);
+        }
 };
 
 // predeclaration for class AngleUnit
@@ -149,6 +154,11 @@ class AngleUnit : public UnitBase<T>
         friend constexpr bool operator== (const AngleUnit<T> &lhs, const RHS &rhs) 
         { 
             return lhs.value == angle_cast<T>(rhs).value; 
+        }
+
+        constexpr T operator- () const
+        {
+            return T(-UnitBase<T>::value);
         }
 };
 
