@@ -11,5 +11,5 @@ namespace FRT
         debug,
     };
 
-    const inline auto log_level = log_levels::debug;
+    const inline auto log_level = log_levels::info;
 }; // namespace

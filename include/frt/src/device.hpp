@@ -45,7 +45,7 @@ class Device
                     try {
                         prefix = SYSFS_DIR + dir + dp->d_name + '/';
                         const auto found_address = FRT::File(prefix + "address").read<std::string, true>();
-                        if (address == found_address) {
+                        if (found_address.find(address) == 0) {
                             closedir(dfd);
                             FRT::Logger::info("Device::connect - success, address:", address, ", prefix:", prefix);
                             return;
