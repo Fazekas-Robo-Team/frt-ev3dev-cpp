@@ -4,6 +4,9 @@
 #include <cmath>
 #include <chrono>
 #include <thread>
+#include <type_traits>
+#include <string>
+#include <limits>
 
 using namespace std::chrono_literals;
 
@@ -40,7 +43,7 @@ template <typename T>
 class UnitBase
 {
     public:
-        double value;
+        const double value;
 
         static std::string postfix;
 
@@ -56,14 +59,61 @@ class UnitBase
             return stream;
         }
 
-        operator double () const
+        constexpr T operator + (const T &rhs) const
         {
-            return UnitBase<T>::value;
+            return T(value + rhs.value);
+        }
+
+        constexpr T operator - (const T &rhs) const 
+        {
+            return T(value - rhs.value);
+        }
+
+        template <typename RHS>
+        requires std::is_arithmetic_v<RHS>
+        friend constexpr T operator * (const UnitBase<T> &lhs, const RHS &rhs)
+        {
+            return T(lhs.value * rhs);
+        }
+
+        template <typename RHS>
+        requires std::is_arithmetic_v<RHS>
+        friend constexpr T operator * (const RHS &rhs, const UnitBase<T> &lhs)
+        {
+            return T(lhs.value * rhs);
+        }
+
+        template <typename RHS>
+        requires std::is_arithmetic_v<RHS>
+        constexpr T operator / (const RHS &rhs) const
+        {
+            return T(value / rhs);
+        }
+
+        constexpr auto operator<=> (const T &rhs) const 
+        {
+            return value - rhs.value <=> 0; 
+        }
+
+        constexpr bool operator== (const T &rhs) const
+        {
+            return fabs(value - rhs.value) < 1e-6;
+        }
+
+        constexpr T operator- () const
+        {
+            return T(-value);
         }
 };
 
+template <typename T>
+class LengthUnit;
+
+template <class T> 
+concept Length = std::is_base_of_v<LengthUnit<T>, T>;
+
 // predeclaration for LengthUnit
-template <typename To, typename From>
+template <Length To, Length From>
 constexpr inline To length_cast (const From &length);
 
 template <typename T>
@@ -72,51 +122,21 @@ class LengthUnit : public UnitBase<T>
     public:
         using UnitBase<T>::UnitBase;
 
-        #define LENGTH_OPERATOR(X) \
-            template <typename RHS> \
-            friend constexpr T operator X (const LengthUnit<T> &lhs, const RHS &rhs) \
-            { \
-                if constexpr (std::is_arithmetic_v<RHS>) return T(lhs.value X rhs); \
-                return T(lhs.value X length_cast<T>(rhs).value); \
-            } \
-            /*template <typename LHS> \
-            friend constexpr T operator X (const LHS &lhs, const LengthUnit<T> &rhs) \
-            { \
-                if constexpr (std::is_arithmetic_v<LHS>) return T(lhs X rhs.value); \
-                return T(length_cast<T>(lhs).value X rhs.value); \
-            }*/
-
-        LENGTH_OPERATOR(+);
-        LENGTH_OPERATOR(-);
-        LENGTH_OPERATOR(*);
-
-        template <typename RHS>
-        friend constexpr auto operator / (const LengthUnit<T> &lhs, const RHS &rhs)
+        template <Length To>
+        constexpr operator To () const
         {
-            if constexpr (std::is_arithmetic_v<RHS>) return T(lhs.value / rhs);
-            return lhs.value / length_cast<T>(rhs).value;
-        }
-
-        template <typename RHS> 
-        friend constexpr auto operator<=> (const LengthUnit<T> &lhs, const RHS &rhs)
-        { 
-            return lhs.value <=> length_cast<T>(rhs).value; 
-        }
-
-        template <typename RHS> 
-        friend constexpr bool operator== (const LengthUnit<T> &lhs, const RHS &rhs)
-        { 
-            return lhs.value == length_cast<T>(rhs).value; 
-        }
-
-        constexpr T operator- () const
-        {
-            return T(-UnitBase<T>::value);
+            return length_cast<To>(T(this->value));
         }
 };
 
+template <typename T>
+class AngleUnit;
+
+template <class T> 
+concept Angle = std::is_base_of_v<AngleUnit<T>, T>;
+
 // predeclaration for class AngleUnit
-template <typename To, typename From>
+template <Angle To, Angle From>
 constexpr inline To angle_cast (const From &angle);
 
 template <typename T>
@@ -125,166 +145,155 @@ class AngleUnit : public UnitBase<T>
     public:
         using UnitBase<T>::UnitBase;
 
-        #define ANGLE_OPERATOR(X) \
-            template <typename RHS> \
-            friend constexpr T operator X (const AngleUnit<T> &lhs, const RHS &rhs) \
-            { \
-                if constexpr (std::is_arithmetic_v<RHS>) return T(lhs.value X rhs); \
-                return T(lhs.value X angle_cast<T>(rhs).value); \
-            } \
-
-        ANGLE_OPERATOR(+);
-        ANGLE_OPERATOR(-);
-        ANGLE_OPERATOR(*);
-
-        template <typename RHS>
-        friend constexpr T operator / (const AngleUnit<T> &lhs, const RHS &rhs)
+        template <Angle To>
+        constexpr operator To () const
         {
-            if constexpr (std::is_arithmetic_v<RHS>) return T(lhs.value / rhs);
-            return lhs.value / angle_cast<T>(rhs).value;
-        }
-
-        template <typename RHS> 
-        friend constexpr auto operator<=> (const AngleUnit<T> &lhs, const RHS &rhs) 
-        { 
-            return lhs.value <=> angle_cast<T>(rhs).value; 
-        }
-
-        template <typename RHS> 
-        friend constexpr bool operator== (const AngleUnit<T> &lhs, const RHS &rhs) 
-        { 
-            return lhs.value == angle_cast<T>(rhs).value; 
-        }
-
-        constexpr T operator- () const
-        {
-            return T(-UnitBase<T>::value);
+            return angle_cast<To>(T(this->value));
         }
 };
 
-class _mm : public LengthUnit<_mm> { public: using LengthUnit<_mm>::LengthUnit; };
-class _cm : public LengthUnit<_cm> { public: using LengthUnit<_cm>::LengthUnit; };
-class _dm : public LengthUnit<_dm> { public: using LengthUnit<_dm>::LengthUnit; };
-class _m : public LengthUnit<_m> { public: using LengthUnit<_m>::LengthUnit; };
+template <typename T>
+concept Unit = Length<T> || Angle<T>;
 
-class _deg : public AngleUnit<_deg> { public: using AngleUnit<_deg>::AngleUnit; };
-class _rad : public AngleUnit<_rad> { public: using AngleUnit<_rad>::AngleUnit; };
-class _grad : public AngleUnit<_grad> { public: using AngleUnit<_grad>::AngleUnit; };
+class mm : public LengthUnit<mm> { public: using LengthUnit<mm>::LengthUnit; };
+class cm : public LengthUnit<cm> { public: using LengthUnit<cm>::LengthUnit; };
+class dm : public LengthUnit<dm> { public: using LengthUnit<dm>::LengthUnit; };
+class m : public LengthUnit<m> { public: using LengthUnit<m>::LengthUnit; };
+
+class deg : public AngleUnit<deg> { public: using AngleUnit<deg>::AngleUnit; };
+class rad : public AngleUnit<rad> { public: using AngleUnit<rad>::AngleUnit; };
+class grad : public AngleUnit<grad> { public: using AngleUnit<grad>::AngleUnit; };
+
+// deprecated, will be removed soon
+using _mm = mm;
+using _cm = cm;
+using _dm = dm;
+using _m = m;
+using _deg = deg;
+using _rad = rad;
+using _grad = grad;
 
 template <typename T> std::string UnitBase<T>::postfix("units");
-template <> std::string UnitBase<_mm>::postfix("mm");
-template <> std::string UnitBase<_cm>::postfix("cm");
-template <> std::string UnitBase<_dm>::postfix("dm");
-template <> std::string UnitBase<_m>::postfix("m");
-template <> std::string UnitBase<_deg>::postfix("deg");
-template <> std::string UnitBase<_rad>::postfix("rad");
-template <> std::string UnitBase<_grad>::postfix("grad");
+template <> std::string UnitBase<mm>::postfix("mm");
+template <> std::string UnitBase<cm>::postfix("cm");
+template <> std::string UnitBase<dm>::postfix("dm");
+template <> std::string UnitBase<m>::postfix("m");
+template <> std::string UnitBase<deg>::postfix("deg");
+template <> std::string UnitBase<rad>::postfix("rad");
+template <> std::string UnitBase<grad>::postfix("grad");
 
 namespace unit_literals 
 {
-    _mm operator""mm (const long double value) { return _mm(value); }
-    _cm operator""cm (const long double value) { return _cm(value); }
-    _dm operator""dm (const long double value) { return _dm(value); }
-    _m operator""m (const long double value) { return _m(value); }
+#define _UNIT_LITERAL(X) X operator"" X (const long double value) { return X(value); } \
+                        X operator"" X (const unsigned long long value) { return X(value); }
+    _UNIT_LITERAL(mm)
+    _UNIT_LITERAL(cm)
+    _UNIT_LITERAL(dm)
+    _UNIT_LITERAL(m)
 
-    _deg operator""deg (const long double value) { return _deg(value); }
-    _rad operator""rad (const long double value) { return _rad(value); }
-    _grad operator""grad (const long double value) { return _grad(value); }
+    _UNIT_LITERAL(deg)
+    _UNIT_LITERAL(rad)
+    _UNIT_LITERAL(grad)
 };
 
-template <typename To, typename From>
+template <Angle To, Angle From>
 constexpr inline To angle_cast (const From &angle) 
 {
     if constexpr (std::is_same_v<From, To>) {
         return angle;
     }
-    if constexpr (std::is_same_v<To, _rad>) {
+    if constexpr (std::is_same_v<To, rad>) {
         // conversions from other units to radian
-        if constexpr (std::is_same_v<From, _deg>) return _rad(angle.value / 180 * pi);
-        if constexpr (std::is_same_v<From, _grad>) return _rad(angle.value / 200 * pi);
+        if constexpr (std::is_same_v<From, deg>) return rad(angle.value / 180 * pi);
+        if constexpr (std::is_same_v<From, grad>) return rad(angle.value / 200 * pi);
     }
-    if constexpr (std::is_same_v<From, _rad>) {
+    if constexpr (std::is_same_v<From, rad>) {
         // conversion from radian to other units
-        if constexpr (std::is_same_v<To, _deg>) return _deg(angle.value * 180 / pi);
-        if constexpr (std::is_same_v<To, _grad>) return _grad(angle.value * 200 / pi);
+        if constexpr (std::is_same_v<To, deg>) return deg(angle.value * 180 / pi);
+        if constexpr (std::is_same_v<To, grad>) return grad(angle.value * 200 / pi);
     }
     // from a unit to radian to another unit
-    const auto radians = angle_cast<_rad>(angle);
+    const auto radians = angle_cast<rad>(angle);
     return angle_cast<To>(radians);
 }
 
-template <typename To, typename From>
+template <Length To, Length From>
 constexpr inline To length_cast (const From &length) 
 {
     if constexpr (std::is_same_v<From, To>) {
         return length;
     }
-    if constexpr (std::is_same_v<To, _m>) {
+    if constexpr (std::is_same_v<To, m>) {
         // conversions from other units to meter
-        if constexpr (std::is_same_v<From, _mm>) return _m(length.value / 1000);
-        if constexpr (std::is_same_v<From, _cm>) return _m(length.value / 100);
-        if constexpr (std::is_same_v<From, _dm>) return _m(length.value / 10);
+        if constexpr (std::is_same_v<From, mm>) return m(length.value / 1000);
+        if constexpr (std::is_same_v<From, cm>) return m(length.value / 100);
+        if constexpr (std::is_same_v<From, dm>) return m(length.value / 10);
     }
-    if constexpr (std::is_same_v<From, _m>) {
+    if constexpr (std::is_same_v<From, m>) {
         // conversion from meter to other units
-        if constexpr (std::is_same_v<To, _mm>) return _mm(length.value * 1000);
-        if constexpr (std::is_same_v<To, _cm>) return _cm(length.value * 100);
-        if constexpr (std::is_same_v<To, _dm>) return _dm(length.value * 10);
+        if constexpr (std::is_same_v<To, mm>) return mm(length.value * 1000);
+        if constexpr (std::is_same_v<To, cm>) return cm(length.value * 100);
+        if constexpr (std::is_same_v<To, dm>) return dm(length.value * 10);
     }
     // from a unit to meters to another unit
-    const auto meters = length_cast<_m>(length);
+    const auto meters = length_cast<m>(length);
     return length_cast<To>(meters);
 }
 
-template <typename To, typename Angle, typename From>
-constexpr inline To length_cast (const Angle &angle, const From &diameter)
+template <Length To>
+constexpr inline To length_cast (const Angle auto &angle, const Length auto &diameter)
 {
-    const _rad radians = angle_cast<_rad>(angle);
-    const _m diameter_meters = length_cast<_m>(diameter);
-    const _m arc = radians.value * diameter_meters.value / 2;
+    const rad radians = angle_cast<rad>(angle);
+    const m diameter_meters = length_cast<m>(diameter);
+    const m arc = radians.value * diameter_meters.value / 2;
     return length_cast<To>(arc);
 }
 
-template <typename To, typename From, typename Diameter>
-constexpr inline To angle_cast (const From &arc_length, const Diameter &diameter)
+template <Angle To>
+constexpr inline To angle_cast (const Length auto &arc_length, const Length auto &diameter)
 {
-    const _m arc_meters = length_cast<_m>(arc_length);
-    const _m diameter_meters = length_cast<_m>(diameter);
-    const _rad radians = 2 * arc_meters.value / diameter_meters.value;
+    const m arc_meters = length_cast<m>(arc_length);
+    const m diameter_meters = length_cast<m>(diameter);
+    const rad radians = 2 * arc_meters.value / diameter_meters.value;
     return angle_cast<To>(radians);
 }
 
-template <typename To, typename Diameter>
-constexpr inline To pulses_to_units (const double pulses, const Diameter &diameter, const int pulses_per_rotation)
+template <Angle To>
+constexpr inline To pulses_to_units (const double pulses, [[maybe_unused]] const Length auto &diameter, const int pulses_per_rotation)
 {
-    if constexpr (std::is_base_of_v<AngleUnit<To>, To>) {
-        const auto radians = _rad(2 * pi * pulses / pulses_per_rotation);
-        return angle_cast<To>(radians);
-    }
-    if constexpr (std::is_base_of_v<LengthUnit<To>, To>) {
-        const auto radians = pulses_to_units<_rad>(pulses, diameter, pulses_per_rotation);
-        return length_cast<To>(radians, diameter);
-    }
-    if constexpr (std::is_arithmetic_v<To>) {
-        return pulses;
-    }
+    const auto radians = rad(2 * pi * pulses / pulses_per_rotation);
+    return angle_cast<To>(radians);
 }
 
-template <typename From, typename Diameter>
-constexpr inline double units_to_pulses (const From &value, const Diameter &diameter, const int pulses_per_rotation)
+template <Length To>
+constexpr inline To pulses_to_units (const double pulses, const Length auto &diameter, const int pulses_per_rotation)
 {
-    if constexpr (std::is_base_of_v<AngleUnit<From>, From>) {
-        const auto radians = angle_cast<_rad>(value);
-        return radians.value / pi / 2 * pulses_per_rotation;
-    }
-    if constexpr (std::is_base_of_v<LengthUnit<From>, From>)
-    {
-        const auto radians = angle_cast<_rad>(value, diameter);
-        return units_to_pulses(radians, diameter, pulses_per_rotation);
-    }
-    if constexpr (std::is_arithmetic_v<From>) {
-        return value;
-    }
+    const auto radians = pulses_to_units<rad>(pulses, diameter, pulses_per_rotation);
+    return length_cast<To>(radians, diameter);
 }
 
+template <typename To>
+requires std::is_arithmetic_v<To>
+constexpr inline To pulses_to_units (const double pulses, [[maybe_unused]] const Length auto &diameter, [[maybe_unused]] const int pulses_per_rotation)
+{
+    return pulses;
 }
+
+constexpr inline double units_to_pulses (const Angle auto &value, [[maybe_unused]] const Length auto &diameter, const int pulses_per_rotation)
+{
+    const auto radians = angle_cast<rad>(value);
+    return radians.value / pi / 2 * pulses_per_rotation;
+}
+
+constexpr inline double units_to_pulses (const Length auto &value, const Length auto &diameter, const int pulses_per_rotation)
+{
+    const auto radians = angle_cast<rad>(value, diameter);
+    return units_to_pulses(radians, diameter, pulses_per_rotation);
+}
+
+constexpr inline double units_to_pulses (const double &value, [[maybe_unused]] const Length auto &diameter, [[maybe_unused]] const int pulses_per_rotation)
+{
+    return value;
+}
+
+}; // namespace

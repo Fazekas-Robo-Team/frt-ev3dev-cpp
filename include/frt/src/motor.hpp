@@ -89,7 +89,7 @@ class TachoMotor
         TachoMotorInterface attributes;
 
         // constant attributes
-        const _m diameter;
+        const m diameter;
         const std::string port;
         const std::vector<std::string> supported_commands;
         const int pulses_per_rotation;
@@ -97,10 +97,9 @@ class TachoMotor
         const int max_speed;
         const std::vector<std::string> supported_stop_actions;
 
-        template <typename Unit>
-        TachoMotor (const std::string_view port, const Unit &diameter, const bool reset = true) 
+        TachoMotor (const std::string_view port, const Unit auto &diameter, const bool reset = true) 
         :   attributes("tacho-motor/", port),
-            diameter(length_cast<_m>(diameter)),
+            diameter(length_cast<m>(diameter)),
             port(attributes.address.read<std::string>()),
             supported_commands(attributes.commands.read<std::vector<std::string>>()),
             pulses_per_rotation(attributes.count_per_rot.read<int>()),
@@ -117,15 +116,14 @@ class TachoMotor
             double position_coefficient = 1;
         } config;
 
-        template <typename Unit>
-        constexpr Unit pulses_to_units (const double pulses)
+        template <Unit To>
+        constexpr To pulses_to_units (const double pulses)
         {
-            const auto value = FRT::pulses_to_units<Unit>(pulses, diameter, pulses_per_rotation);
+            const auto value = FRT::pulses_to_units<To>(pulses, diameter, pulses_per_rotation);
             return value * config.position_coefficient;
         }
 
-        template <typename Unit>
-        constexpr int units_to_pulses (const Unit &value)
+        constexpr int units_to_pulses (const Unit auto &value)
         {
             const auto pulses = FRT::units_to_pulses(value, diameter, pulses_per_rotation);
             return round(pulses / config.position_coefficient);
@@ -246,14 +244,13 @@ class TachoMotor
             attributes.speed_pid_kd.write(kd);
         }
 
-        template <typename Unit = _cm>
+        template <Unit Unit = cm>
         Unit get_position_setpoint ()
         {
             return TachoMotor::pulses_to_units<Unit>(position_setpoint);
         }
 
-        template <typename Unit>
-        void set_position_setpoint (const Unit &value)
+        void set_position_setpoint (const Unit auto &value)
         {
             const auto pulses = TachoMotor::units_to_pulses(value);
             if (pulses != position_setpoint) {
@@ -262,35 +259,33 @@ class TachoMotor
             }
         }
 
-        template <typename Unit = _cm>
+        template <Unit Unit = cm>
         Unit get_position ()
         {
             const auto pulses = attributes.position.read<int>();
             return TachoMotor::pulses_to_units<Unit>(pulses);
         }
 
-        template <typename Unit>
-        void set_position (const Unit &value)
+        void set_position (const Unit auto &value)
         {
             const auto pulses = TachoMotor::units_to_pulses(value);
             attributes.position.write(pulses);
         }
 
-        template <typename Unit = _cm>
+        template <Unit Unit = cm>
         Unit get_speed ()
         {
             const auto pulses = attributes.speed.read<int>();
             return TachoMotor::pulses_to_units<Unit>(pulses);
         }
 
-        template <typename Unit = _cm>
+        template <Unit Unit = cm>
         Unit get_speed_setpoint ()
         {
             return TachoMotor::pulses_to_units<Unit>(speed_setpoint);
         }
 
-        template <typename Unit>
-        void set_speed_setpoint (const Unit &value)
+        void set_speed_setpoint (const Unit auto &value)
         {
             auto pulses = TachoMotor::units_to_pulses(value);
             pulses = clamp(pulses, -max_speed, max_speed);
@@ -383,8 +378,8 @@ class TachoMotor
             }
         }
 
-        template <bool block = false, typename Unit>
-        void on (const Unit &velocity)
+        template <bool block = false>
+        void on (const Unit auto &velocity)
         {
             set_speed_setpoint(velocity);
             run_command(TachoMotor::commands::run_forever);
@@ -393,8 +388,8 @@ class TachoMotor
             }
         }
 
-        template <bool block = true, bool brake = true, typename DistanceUnit, typename VelocityUnit>
-        void on_for_segment (const DistanceUnit &segment, const VelocityUnit &velocity)
+        template <bool block = true, bool brake = true>
+        void on_for_segment (const Unit auto &segment, const Unit auto &velocity)
         {
             set_position_setpoint(segment);
             set_speed_setpoint(velocity);
@@ -412,8 +407,8 @@ class TachoMotor
             }
         }
 
-        template <bool block = true, bool brake = true, typename DistanceUnit, typename VelocityUnit>
-        void on_to_position (const DistanceUnit &position, const VelocityUnit &velocity)
+        template <bool block = true, bool brake = true>
+        void on_to_position (const Unit auto &position, const Unit auto &velocity)
         {
             set_position_setpoint(position);
             set_speed_setpoint(velocity);

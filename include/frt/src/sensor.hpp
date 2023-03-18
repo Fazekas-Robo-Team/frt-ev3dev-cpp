@@ -43,7 +43,7 @@ struct ColorBase
     constexpr ColorBase (const int value) : value(value) 
     {}
 
-    operator int() const
+    operator int () const
     {
         return value;
     }
