@@ -23,8 +23,8 @@ class LED
     {
         LEDInterface attributes;
 
-        LEDColor (const std::string_view name)
-        : attributes("leds/", name)
+        LEDColor (const std::string &path)
+        : attributes(path)
         {}
 
         int get_max_brightness ()
@@ -74,8 +74,11 @@ class LED
     };
 
     public:
-        LEDColor red = { "asd" };
-        LEDColor green = { "asd" };
+        LEDColor red_left = { "leds/led0:red:brick-status/" };
+        LEDColor green_left = { "leds/led0:green:brick-status/" };
+        LEDColor red_right = { "leds/led1:red:brick-status/" };
+        LEDColor green_right = { "leds/led1:green:brick-status/" };
+        
 };
 
 } // namespace

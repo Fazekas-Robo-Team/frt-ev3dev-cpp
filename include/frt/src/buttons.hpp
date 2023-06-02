@@ -20,7 +20,7 @@ class Buttons
     const int file_descriptor;
     std::vector<unsigned int> state;
 
-    static constexpr char path[] = "/dev/input/by-path/platform-gpio-keys.0-event";
+    static constexpr char path[] = "/dev/input/by-path/platform-gpio_keys-event";
 
     void read () const
     {
@@ -36,7 +36,7 @@ class Buttons
         if constexpr (read) {
             Buttons::read();
         }
-        return state[button / sizeof(unsigned long)] & (1 << (button % sizeof(unsigned long)));
+        return state[button / sizeof(unsigned long) / 8] & (1 << (button % (sizeof(unsigned long) * 8)));
     }
 
     void wait_until (const int button)
@@ -80,7 +80,7 @@ class Buttons
         
         Buttons ()
         : file_descriptor(open(path, O_RDONLY)),
-          state(std::ceil(KEY_CNT / sizeof(unsigned int)), 0)
+          state(std::ceil(KEY_CNT / sizeof(unsigned long) / 8), 0)
         {}
 
         ~Buttons ()

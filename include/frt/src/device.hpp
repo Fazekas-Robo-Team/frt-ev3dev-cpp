@@ -59,6 +59,12 @@ class Device
             FRT::Logger::error("Device::connect - failed, address:", address);
         }
 
+        Device (const std::string &path) noexcept
+        {
+            prefix = SYSFS_DIR + path;
+            FRT::Logger::info("Device::connect - absolute path:", path);
+        }
+
         Device (const Device &) = delete;
         virtual ~Device () {};
 };
