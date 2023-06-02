@@ -7,3 +7,6 @@
 #include "src/motor.hpp"
 #include "src/sensor.hpp"
 #include "src/utility.hpp"
+#include "src/buttons.hpp"
+#include "src/sound.hpp"
+#include "src/led.hpp"

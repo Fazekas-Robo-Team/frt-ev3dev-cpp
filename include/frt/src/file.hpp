@@ -33,7 +33,7 @@ class File
 
                 if (!input_stream.is_open()) {
                     if constexpr (!silent) {
-                        Logger::error("File::ensure_input - cannot open", path);
+                        Logger::error("File::ensure_input - cannot open file", path);
                     }
                 }
             }
@@ -50,7 +50,7 @@ class File
                 output_stream.open(path);
 
                 if (!output_stream.is_open()) {
-                    Logger::error("File::ensure_input - cannot open", path);
+                    Logger::error("File::ensure_input - cannot open file", path);
                 }
             }
 
