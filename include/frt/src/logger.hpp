@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config.hpp"
+#include "sound.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -67,6 +68,9 @@ class Logger
                 print_time();
                 std::cout << " ERROR]  ";
                 print(args...);
+            }
+            if constexpr (beep_on_error) {
+                Sound::beep(1000, 200);
             }
         }
 
