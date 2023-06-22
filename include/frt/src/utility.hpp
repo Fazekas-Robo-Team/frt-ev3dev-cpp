@@ -43,7 +43,7 @@ template <typename T>
 class UnitBase
 {
     public:
-        const double value;
+        double value;
 
         static std::string postfix;
 
@@ -51,8 +51,12 @@ class UnitBase
 
         UnitBase () = delete;
         UnitBase (const UnitBase &) = default;
-        UnitBase (UnitBase &&) = default;
-        constexpr T operator= (const UnitBase &) = default;
+
+        UnitBase<T> &operator= (const UnitBase<T> &rhs)
+        {
+            value = rhs.value;
+            return *this;
+        }
 
         friend std::ostream &operator<< (std::ostream &stream, const UnitBase &value)
         {
