@@ -313,6 +313,9 @@ struct HTColorSensorV2::colors {
 
 class GyroSensor : public Sensor
 {
+    protected:
+        deg base = 0;
+
     public:
         struct modes
         {
@@ -327,13 +330,20 @@ class GyroSensor : public Sensor
 
         GyroSensor (const std::string_view port)
         : Sensor(port)
-        {}
+        {
+            reset();
+        }
+
+        void reset ()
+        {
+            base = get_angle();
+        }
 
         deg get_angle ()
         {
             set_mode(modes::angle);
             const int value = attributes.value[0].read<int>();
-            return deg(value);
+            return deg(value) - base;
         }
 
         deg get_rate ()
@@ -361,7 +371,7 @@ class GyroSensor : public Sensor
             set_mode(modes::angle_and_rate);
             const int angle = attributes.value[0].read<int>();
             const int rate = attributes.value[1].read<int>();
-            return AngleAndRate { deg(angle), deg(rate) };
+            return AngleAndRate { deg(angle) - base, deg(rate) };
         }
 
         deg get_tilt_rate ()

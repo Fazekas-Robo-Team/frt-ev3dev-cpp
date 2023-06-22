@@ -52,6 +52,7 @@ class UnitBase
         UnitBase () = delete;
         UnitBase (const UnitBase &) = default;
         UnitBase (UnitBase &&) = default;
+        constexpr T operator= (const UnitBase &) = default;
 
         friend std::ostream &operator<< (std::ostream &stream, const UnitBase &value)
         {
@@ -59,33 +60,33 @@ class UnitBase
             return stream;
         }
 
-        constexpr T operator + (const T &rhs) const
+        constexpr T operator+ (const T &rhs) const
         {
             return T(value + rhs.value);
         }
 
-        constexpr T operator - (const T &rhs) const 
+        constexpr T operator- (const T &rhs) const 
         {
             return T(value - rhs.value);
         }
 
         template <typename RHS>
         requires std::is_arithmetic_v<RHS>
-        friend constexpr T operator * (const UnitBase<T> &lhs, const RHS &rhs)
+        friend constexpr T operator* (const UnitBase<T> &lhs, const RHS &rhs)
         {
             return T(lhs.value * rhs);
         }
 
         template <typename RHS>
         requires std::is_arithmetic_v<RHS>
-        friend constexpr T operator * (const RHS &rhs, const UnitBase<T> &lhs)
+        friend constexpr T operator* (const RHS &rhs, const UnitBase<T> &lhs)
         {
             return T(lhs.value * rhs);
         }
 
         template <typename RHS>
         requires std::is_arithmetic_v<RHS>
-        constexpr T operator / (const RHS &rhs) const
+        constexpr T operator/ (const RHS &rhs) const
         {
             return T(value / rhs);
         }
