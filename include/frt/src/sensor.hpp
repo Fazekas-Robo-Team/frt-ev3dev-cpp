@@ -311,4 +311,72 @@ struct HTColorSensorV2::colors {
     static constexpr HTColorSensorV2::Color white = { 17 };
 };
 
+class GyroSensor : public Sensor
+{
+    public:
+        struct modes
+        {
+            static constexpr std::string_view angle = "GYRO-ANG";
+            static constexpr std::string_view rate = "GYRO-RATE";
+            static constexpr std::string_view rate_raw = "GYRO-FAS";
+            static constexpr std::string_view angle_and_rate = "GYRO-G&A";
+            static constexpr std::string_view calibration = "GYRO-CAL";
+            static constexpr std::string_view tilt_rate = "TILT-RATE";
+            static constexpr std::string_view tilt_angle = "TILT-ANG";
+        };
+
+        GyroSensor (const std::string_view port)
+        : Sensor(port)
+        {}
+
+        deg get_angle ()
+        {
+            set_mode(modes::angle);
+            const int value = attributes.value[0].read<int>();
+            return deg(value);
+        }
+
+        deg get_rate ()
+        {
+            set_mode(modes::rate);
+            const int value = attributes.value[0].read<int>();
+            return deg(value);
+        }
+
+        int get_rate_raw ()
+        {
+            set_mode(modes::rate_raw);
+            const int value = attributes.value[0].read<int>();
+            return value;
+        }
+
+        struct AngleAndRate
+        {
+            deg angle;
+            deg rate;
+        };
+
+        AngleAndRate get_angle_and_rate ()
+        {
+            set_mode(modes::angle_and_rate);
+            const int angle = attributes.value[0].read<int>();
+            const int rate = attributes.value[1].read<int>();
+            return AngleAndRate { deg(angle), deg(rate) };
+        }
+
+        deg get_tilt_rate ()
+        {
+            set_mode(modes::tilt_rate);
+            const int value = attributes.value[0].read<int>();
+            return deg(value);
+        }
+
+        deg get_tilt_angle ()
+        {
+            set_mode(modes::tilt_angle);
+            const int value = attributes.value[0].read<int>();
+            return deg(value);
+        }
+};
+
 }; // namespace
